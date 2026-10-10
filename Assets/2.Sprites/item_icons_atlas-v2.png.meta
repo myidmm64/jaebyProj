@@ -1,0 +1,564 @@
+fileFormatVersion: 2
+guid: d6b8c59ed0196e41e45d583f86a90d39
+labels:
+- GOPS
+- GOPS_Items
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3800657677614753962
+    second: icons.red_potion
+  - first:
+      213: -7260724933342831410
+    second: icons.heart
+  - first:
+      213: 7645329721934850784
+    second: icons.die
+  - first:
+      213: -6510496587008802007
+    second: icons.gold_key
+  - first:
+      213: 1893706699976954009
+    second: icons.hourglass
+  - first:
+      213: -898193822655948443
+    second: icons.hand_mirror
+  - first:
+      213: -2351722163621257851
+    second: icons.candle
+  - first:
+      213: -1973107313086395545
+    second: icons.star_wand
+  - first:
+      213: 6683388525381343963
+    second: icons.moon_grimoire
+  - first:
+      213: -3989344243688957659
+    second: icons.pentagram_seal
+  - first:
+      213: -2857310196558562615
+    second: icons.purple_orb
+  - first:
+      213: 797016513147174334
+    second: icons.chain_ring
+  - first:
+      213: -6443920617142877263
+    second: icons.violet_crystal
+  - first:
+      213: 1517100432074073214
+    second: icons.sword
+  - first:
+      213: 9101487272440511828
+    second: icons.gold_token
+  - first:
+      213: 4794058234165592321
+    second: icons.shield
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 0
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 9
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: icons.red_potion
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 916
+        width: 160
+        height: 217
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 670ffbdc2defc0974a8535b7025b2455
+      internalID: -3800657677614753962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.heart
+      rect:
+        serializedVersion: 2
+        x: 382
+        y: 927
+        width: 193
+        height: 170
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f4cfa7106f84f4f858d03e8f7288df6e
+      internalID: -7260724933342831410
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.die
+      rect:
+        serializedVersion: 2
+        x: 684
+        y: 916
+        width: 179
+        height: 195
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb41b218b433f7309b9fe0f047830bc4
+      internalID: 7645329721934850784
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.gold_key
+      rect:
+        serializedVersion: 2
+        x: 989
+        y: 919
+        width: 181
+        height: 199
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bab06f18c23ea7a5258df5885aa20f47
+      internalID: -6510496587008802007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.hourglass
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 618
+        width: 158
+        height: 223
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71abcd300a3d1d13d999f8187e89b5db
+      internalID: 1893706699976954009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.hand_mirror
+      rect:
+        serializedVersion: 2
+        x: 379
+        y: 618
+        width: 202
+        height: 217
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a08a6f22a18f8b5eeb2d325aac8b4c7
+      internalID: -898193822655948443
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.candle
+      rect:
+        serializedVersion: 2
+        x: 688
+        y: 618
+        width: 174
+        height: 234
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c17e7423d525a76b4460dfea809cb32
+      internalID: -2351722163621257851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.star_wand
+      rect:
+        serializedVersion: 2
+        x: 989
+        y: 623
+        width: 194
+        height: 222
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97ea19f3428e7d8a86d9b30b1d89b044
+      internalID: -1973107313086395545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.moon_grimoire
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 328
+        width: 223
+        height: 228
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3169c66861ccb21962295cc61cef88d0
+      internalID: 6683388525381343963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.pentagram_seal
+      rect:
+        serializedVersion: 2
+        x: 388
+        y: 345
+        width: 203
+        height: 201
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2980a4e899a9ca9460f72ab87d4f6922
+      internalID: -3989344243688957659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.purple_orb
+      rect:
+        serializedVersion: 2
+        x: 685
+        y: 331
+        width: 178
+        height: 215
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 420978b68c7924383fe6765d03c5c679
+      internalID: -2857310196558562615
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.chain_ring
+      rect:
+        serializedVersion: 2
+        x: 977
+        y: 333
+        width: 206
+        height: 214
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d13d61ce8f5096d10f1825ef3d34ecd
+      internalID: 797016513147174334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.violet_crystal
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 65
+        width: 153
+        height: 216
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36ea86853dd9c477762fb299504650d3
+      internalID: -6443920617142877263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.sword
+      rect:
+        serializedVersion: 2
+        x: 369
+        y: 71
+        width: 211
+        height: 198
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80271fbf374d2b66e0cf1e1523ce2037
+      internalID: 1517100432074073214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.gold_token
+      rect:
+        serializedVersion: 2
+        x: 685
+        y: 79
+        width: 168
+        height: 171
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 012dda859e11270341a4a5f20f3af2dc
+      internalID: 9101487272440511828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: icons.shield
+      rect:
+        serializedVersion: 2
+        x: 989
+        y: 69
+        width: 177
+        height: 213
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93078b00295c3c23ce1abeb9d4e546eb
+      internalID: 4794058234165592321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      icons.red_potion: -3800657677614753962
+      icons.heart: -7260724933342831410
+      icons.die: 7645329721934850784
+      icons.gold_key: -6510496587008802007
+      icons.hourglass: 1893706699976954009
+      icons.hand_mirror: -898193822655948443
+      icons.candle: -2351722163621257851
+      icons.star_wand: -1973107313086395545
+      icons.moon_grimoire: 6683388525381343963
+      icons.pentagram_seal: -3989344243688957659
+      icons.purple_orb: -2857310196558562615
+      icons.chain_ring: 797016513147174334
+      icons.violet_crystal: -6443920617142877263
+      icons.sword: 1517100432074073214
+      icons.gold_token: 9101487272440511828
+      icons.shield: 4794058234165592321
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,564 @@
+fileFormatVersion: 2
+guid: a54781bf5dd10882a0cc505b4a5fd011
+labels:
+- GOPS
+- GOPS_Numbers
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1438558332232124806
+    second: glyphs.0
+  - first:
+      213: -1491099107545994340
+    second: glyphs.1
+  - first:
+      213: 6058676262610767543
+    second: glyphs.2
+  - first:
+      213: 2840082234393865973
+    second: glyphs.3
+  - first:
+      213: -3935272485962383427
+    second: glyphs.4
+  - first:
+      213: 4089289571103241893
+    second: glyphs.5
+  - first:
+      213: -355659052193120650
+    second: glyphs.6
+  - first:
+      213: 8997942296192385111
+    second: glyphs.7
+  - first:
+      213: 7929885482838334611
+    second: glyphs.8
+  - first:
+      213: -5211326319306470125
+    second: glyphs.9
+  - first:
+      213: -2517545607508060804
+    second: glyphs.10
+  - first:
+      213: 237042648818538233
+    second: glyphs.11
+  - first:
+      213: 3691017115343573910
+    second: glyphs.12
+  - first:
+      213: 7991751372116484575
+    second: glyphs.13
+  - first:
+      213: -5474850965226226142
+    second: glyphs.plus
+  - first:
+      213: -4067778199679530242
+    second: glyphs.slash
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 0
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 9
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: glyphs.0
+      rect:
+        serializedVersion: 2
+        x: 91
+        y: 965
+        width: 164
+        height: 216
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2bc884bbeba51424b2921991eb6f7be
+      internalID: -1438558332232124806
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.1
+      rect:
+        serializedVersion: 2
+        x: 423
+        y: 966
+        width: 114
+        height: 214
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 711d59c8d8a1aebdb8d1a09d28201d8c
+      internalID: -1491099107545994340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.2
+      rect:
+        serializedVersion: 2
+        x: 698
+        y: 968
+        width: 166
+        height: 213
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6618038623fdb0724bf97e0a25544524
+      internalID: 6058676262610767543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.3
+      rect:
+        serializedVersion: 2
+        x: 1010
+        y: 966
+        width: 161
+        height: 215
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fefbed2972d3995b1d606b5638a36218
+      internalID: 2840082234393865973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.4
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 653
+        width: 183
+        height: 219
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a58e2eceb8ebe24e5631edf817f29fc6
+      internalID: -3935272485962383427
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.5
+      rect:
+        serializedVersion: 2
+        x: 398
+        y: 654
+        width: 170
+        height: 220
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c7b19293862b94e0d1fb2582b08c8d4
+      internalID: 4089289571103241893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.6
+      rect:
+        serializedVersion: 2
+        x: 698
+        y: 654
+        width: 166
+        height: 220
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b0766cd82bcc943aa9112256eef203f
+      internalID: -355659052193120650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.7
+      rect:
+        serializedVersion: 2
+        x: 1007
+        y: 654
+        width: 170
+        height: 220
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8638d85a8e8a3bb156a80c6ddcd6cf1e
+      internalID: 8997942296192385111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.8
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 349
+        width: 172
+        height: 213
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 975a5cc9a7804ce24d13fa9408bf662a
+      internalID: 7929885482838334611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.9
+      rect:
+        serializedVersion: 2
+        x: 389
+        y: 350
+        width: 165
+        height: 213
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11e232a0f95ecdeea3f64aa6c7b1f22a
+      internalID: -5211326319306470125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.10
+      rect:
+        serializedVersion: 2
+        x: 651
+        y: 350
+        width: 252
+        height: 209
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9dcc774150b7d5c9f3e831849e97aa8
+      internalID: -2517545607508060804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.11
+      rect:
+        serializedVersion: 2
+        x: 992
+        y: 350
+        width: 214
+        height: 209
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3223472110e73e0029da108c79e11671
+      internalID: 237042648818538233
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.12
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 63
+        width: 234
+        height: 196
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ba95e2fa7f55f275d868cf3450fd5b3
+      internalID: 3691017115343573910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.13
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 63
+        width: 234
+        height: 196
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c88ec1baa77b514285c210cd2350d65f
+      internalID: 7991751372116484575
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.plus
+      rect:
+        serializedVersion: 2
+        x: 698
+        y: 79
+        width: 173
+        height: 164
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11677ca360f8951223b5f1dfb25075b3
+      internalID: -5474850965226226142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyphs.slash
+      rect:
+        serializedVersion: 2
+        x: 1012
+        y: 63
+        width: 177
+        height: 196
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: efd6bad7ee8d204b4fb51fe7d97d2513
+      internalID: -4067778199679530242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      glyphs.0: -1438558332232124806
+      glyphs.1: -1491099107545994340
+      glyphs.2: 6058676262610767543
+      glyphs.3: 2840082234393865973
+      glyphs.4: -3935272485962383427
+      glyphs.5: 4089289571103241893
+      glyphs.6: -355659052193120650
+      glyphs.7: 8997942296192385111
+      glyphs.8: 7929885482838334611
+      glyphs.9: -5211326319306470125
+      glyphs.10: -2517545607508060804
+      glyphs.11: 237042648818538233
+      glyphs.12: 3691017115343573910
+      glyphs.13: 7991751372116484575
+      glyphs.plus: -5474850965226226142
+      glyphs.slash: -4067778199679530242
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
