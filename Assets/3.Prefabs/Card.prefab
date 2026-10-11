@@ -59,6 +59,10 @@ MonoBehaviour:
   - {fileID: -5211326319306470125, guid: a54781bf5dd10882a0cc505b4a5fd011, type: 3}
   - {fileID: -2517545607508060804, guid: a54781bf5dd10882a0cc505b4a5fd011, type: 3}
   numSprite: {fileID: 5996197155172431953}
+  cardSpriteRenderer: {fileID: 55131074521590867}
+  unselectedSprite: {fileID: 2161105326723265312, guid: 979df12cc705468d50d9e17780bca0ba, type: 3}
+  selectedSprite: {fileID: -2692270556674592713, guid: 979df12cc705468d50d9e17780bca0ba, type: 3}
+  selected: 0
 --- !u!61 &6584975893388290616
 BoxCollider2D:
   m_ObjectHideFlags: 0
