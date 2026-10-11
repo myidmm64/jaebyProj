@@ -7,8 +7,8 @@ public abstract class Card : MonoBehaviour
     public void Init(int num)
     {
         this.num = num;
-        ChildInit();
+        ChildInit(num);
     }
-    protected abstract void ChildInit();
+    protected abstract void ChildInit(int num);
 
 }
