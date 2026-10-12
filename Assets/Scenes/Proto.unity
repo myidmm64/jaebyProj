@@ -751,8 +751,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   card: {fileID: 2505159051599742667, guid: 436f65562b233f045b66e47f3c28ded2, type: 3}
-  cardCount: 4
-  xPadding: 1.8
+  cardCount: 6
+  xPadding: 1.25
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
