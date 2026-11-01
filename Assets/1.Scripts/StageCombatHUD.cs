@@ -12,14 +12,36 @@ public sealed partial class StageCombatController
     float bagProgress;
     int completedCards;
     bool settingsOpen,rewardInfoOpen,costumeOpen;
+    readonly System.Collections.Generic.List<(RectTransform bar,Transform unit,float height)> healthBars=new System.Collections.Generic.List<(RectTransform,Transform,float)>();
     readonly Color paper=new Color(.91f,.91f,.85f),muted=new Color(.55f,.61f,.61f),gold=new Color(.95f,.75f,.3f);
+    void LateUpdate()
+    {
+        if(worldCamera==null||worldOverlay==null)return;
+        foreach(var entry in healthBars)
+        {
+            if(entry.unit==null||entry.bar==null)continue;
+            var screen=worldCamera.WorldToScreenPoint(entry.unit.position+Vector3.up*entry.height);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(worldOverlay,screen,null,out var point);
+            entry.bar.anchoredPosition=point;
+        }
+    }
+    void DrawUnitHealth(GridObject unit,int hp,int maxHP,Color color)
+    {
+        var bar=Box(worldOverlay,"Unit health",0,0,64,20,dark);bar.pivot=new Vector2(.5f,0);
+        bar.GetComponent<Image>().raycastTarget=false;
+        var fill=Box(bar,"Health fill",2,2,60*Mathf.Clamp01(hp/(float)Mathf.Max(1,maxHP)),16,color);fill.GetComponent<Image>().raycastTarget=false;
+        var number=Text(bar,Mathf.Max(0,hp).ToString(),2,0,60,20,14);number.alignment=TextAnchor.MiddleCenter;number.color=Color.white;
+        float height=stage.CellSize*.6f;
+        foreach(var renderer in unit.GetComponentsInChildren<Renderer>())if(renderer.enabled)height=Mathf.Max(height,renderer.bounds.max.y-unit.transform.position.y+stage.CellSize*.12f);
+        healthBars.Add((bar,unit.transform,height));
+    }
     void AnimateHUD()
     {
         if(root==null)return;
         bagProgress=Mathf.MoveTowards(bagProgress,bagOpen?1:0,Time.unscaledDeltaTime*5);
         PositionDrawer();
     }
-    void PositionDrawer()
+    void PositionDrawer(bool applyEdits=true)
     {
         float y=Mathf.Lerp(root.rect.height-242,root.rect.height-487,Mathf.SmoothStep(0,1,bagProgress));
         float x=(root.rect.width-925)*.5f;
@@ -27,6 +49,12 @@ public sealed partial class StageCombatController
         if(statusLine!=null)statusLine.rectTransform.anchoredPosition=new Vector2(x+5,-(y-30));
         if(bagPanel!=null){bagPanel.anchoredPosition=new Vector2(x,-(y+240));bagPanel.gameObject.SetActive(bagProgress>.001f);}
         if(bagGroup!=null){bagGroup.alpha=bagProgress;bagGroup.blocksRaycasts=bagOpen&&bagProgress>.8f;bagGroup.interactable=CanEdit;}
+        if(applyEdits)
+        {
+            if(sequencePanel!=null)sequencePanel.GetComponent<CombatUINode>().ApplyPositionEdit();
+            if(bagPanel!=null)bagPanel.GetComponent<CombatUINode>().ApplyPositionEdit();
+            if(statusLine!=null)statusLine.GetComponent<CombatUINode>().ApplyPositionEdit();
+        }
     }
     RectTransform Surface(Transform parent,string name,float x,float y,float w,float h)
     {
@@ -51,6 +79,7 @@ public sealed partial class StageCombatController
     }
     void DrawHUD()
     {
+        healthBars.Clear();
         worldOverlay=Box(view,"World overlay",0,0,root.rect.width,root.rect.height,Color.clear);worldOverlay.GetComponent<Image>().raycastTarget=false;
         float w=root.rect.width,h=root.rect.height;
         var main=TransparentHUD(view,"Concept HUD",0,0,w,h);
@@ -62,10 +91,12 @@ public sealed partial class StageCombatController
         foreach(var e in battle.Enemies.Where(e=>e.HP>0))
         {
             foreach(var p in e.Intent)Marker(p,new Color(1,.12f,.15f,.2f),"",18);
-            Marker(e.Cell,Color.clear,$"{(e.Ranged?"직선":"근접")} {e.HP}",12);
         }
         foreach(var p in busy?attackArea:selected!=null?battle.Area(selected):new System.Collections.Generic.List<Vector2Int>())Marker(p,new Color(1,.55f,.1f,.4f),"",24);
         if(choosingMove)foreach(var p in battle.Reachable()){var dest=p;Marker(p,Color.yellow,"",11,()=>moveDestination=dest);}
+        DrawUnitHealth(stage.Player,battle.HP,60,new Color(.2f,.65f,.38f));
+        var living=battle.Enemies.Where(e=>e.HP>0).ToArray();
+        for(int i=0;i<living.Length&&i<actors.Count;i++)DrawUnitHealth(actors[i],living[i].HP,living[i].MaxHP,new Color(.8f,.24f,.25f));
         var stats=TransparentHUD(main,"Player stats",12,100,175,355);SmallTitle(stats,"현재 스탯",14,14);
         Text(stats,$"체력\n{Mathf.Max(0,battle.HP)} / 60",14,52,150,60,22);Fill(stats,14,118,145,9,battle.HP/60f,new Color(.75f,.23f,.24f));
         Text(stats,$"마나 충전\n{battle.Mana} / 12",14,151,150,60,22);Fill(stats,14,218,145,9,battle.Mana/12f,blue);
@@ -100,15 +131,17 @@ public sealed partial class StageCombatController
         }
         bagPanel=Surface(main,"Owned bag",270,860,925,245);AddDrop(bagPanel,-1,null);
         bagGroup=Ensure<CanvasGroup>(bagPanel.gameObject);
-        SmallTitle(bagPanel,"가방  /  카드를 끌어서 장착",12,7,600);
+        SmallTitle(bagPanel,"가방  /  Q · E 페이지 이동",12,7,305);
+        Button(bagPanel,"정렬",330,4,100,28,()=>{battle.SortCards();page=0;},CanEdit&&dragCard==null);
+        Button(bagPanel,"자동 합성",440,4,140,28,()=>{battle.AutoMerge();selected=null;page=0;},CanEdit&&dragCard==null);
         var stored=Stored();int pages=Mathf.Max(1,(stored.Count+5)/6);page=Mathf.Clamp(page,0,pages-1);
-        Button(bagPanel,"◀",650,4,64,28,()=>page--,page>0);Text(bagPanel,$"{page+1}/{pages}",737,9,65,24,14);Button(bagPanel,"▶",846,4,64,28,()=>page++,page<pages-1);
+        Button(bagPanel,"◀ Q",650,4,64,28,()=>ChangeBagPage(-1),CanEdit&&page>0);Text(bagPanel,$"{page+1}/{pages}",737,9,65,24,14);Button(bagPanel,"E ▶",846,4,64,28,()=>ChangeBagPage(1),CanEdit&&page<pages-1);
         int n=0;foreach(var c in stored.Skip(page*6).Take(6)){var card=c;var r=DrawCard(bagPanel,c,12+n*152,36,142,188,"보관 중",()=>selected=card);AddDrop(r,-1,c);n++;}
         if(stored.Count==0)Text(bagPanel,"보관 중인 카드가 없습니다. 시퀀스 카드를 이곳에 놓으면 보관됩니다.",25,100,875,60,20);
         statusLine=Text(main,choosingMove?"노란 점을 선택하세요. 이동 후 다음 카드가 실행됩니다.":string.Join("  /  ",battle.Log.Skip(Math.Max(0,battle.Log.Count-1))),275,590,915,25,15);statusLine.color=paper;
-        PositionDrawer();
+        PositionDrawer(false);
         if(rewardInfoOpen)
-        {var info=Surface(main,"Wave reward info",w-312,80,285,150);Text(info,"현재 웨이브 보상\n카드 3장 중 1장 선택\n폭렬 코스튬 ★1 · 골드 10",15,15,260,115,18);}
+        {var info=Surface(main,"Wave reward info",w-312,80,285,175);Text(info,"카드 수급: 2턴마다 1장\n웨이브 클리어: 추가 1장\n클리어 직후 턴 수급 생략\n폭렬 코스튬 ★1 · 골드 10",15,15,260,145,18);}
         if(settingsOpen)
         {
             var settings=Surface(main,"Settings",w-312,80,300,190);Text(settings,"설정",15,12,270,35,23);
@@ -123,10 +156,18 @@ public sealed partial class StageCombatController
             Button(costume,"코스튬 교체",15,158,155,34,()=>{battle.Equip(battle.Costumes.Count==0?-1:(battle.Equipped+2)%(battle.Costumes.Count+1)-1);SyncActors();},CanEdit);
             Button(costume,"성급 강화",180,158,155,34,()=>battle.MergeCostume(),CanEdit);Button(costume,"닫기",15,201,320,30,()=>costumeOpen=false);
         }
-        if(battle.Phase==BattlePhase.Reward)
+        if(battle.Phase==BattlePhase.Reward||battle.Phase==BattlePhase.TurnReward)
         {
-            var reward=Surface(main,"Rewards",(w-800)*.5f,80,800,330);Text(reward,"웨이브 승리 · 카드 하나 선택",20,12,760,40,24);
-            for(int i=0;i<3;i++){int id=i;DrawCard(reward,battle.Rewards[i],20+i*258,66,245,240,"획득",()=>{battle.Reward(id);selected=null;SyncActors();});}
+            bool turnReward=battle.Phase==BattlePhase.TurnReward;
+            Box(main,"Reward backdrop",0,0,w,h,new Color(0,0,0,.65f));
+            var reward=Surface(main,"Rewards",(w-800)*.5f,(h-360)*.5f,800,360);
+            Text(reward,turnReward?$"{battle.Turn}턴 시작 · 카드 3장 중 1장 선택":"웨이브 승리 · 추가 카드 1장 선택",20,12,760,40,24);
+            for(int i=0;i<3;i++){int id=i;var offered=battle.Rewards[i];DrawCard(reward,offered,20+i*258,66,245,240,"선택하여 획득",()=>{
+                if(battle.Phase!=(turnReward?BattlePhase.TurnReward:BattlePhase.Reward)||battle.Rewards.Count<=id||battle.Rewards[id]!=offered)return;
+                if(turnReward){battle.ChooseTurnCard(id);selected=offered;bagOpen=true;page=Math.Max(0,(Stored().Count-1)/6);}
+                else {battle.Reward(id);selected=null;bagOpen=false;SyncActors();}
+            });}
+            Text(reward,turnReward?"선택한 카드는 가방에 추가됩니다. 턴 카드는 2턴마다 획득합니다.":"보상 획득 후 다음 웨이브를 시작합니다. 직후 턴 카드 선택은 생략합니다.",20,323,760,26,16);
         }
         if(battle.Phase==BattlePhase.Defeat){var over=Surface(main,"Defeat",w-512,80,500,200);Text(over,"패배",20,20,450,50,30);Button(over,"새 런 시작",20,110,460,50,ResetRun,!busy);}
     }

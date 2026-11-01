@@ -15,6 +15,7 @@ public sealed partial class StageCombatController : MonoBehaviour
     Camera worldCamera;
     Font font;
     Canvas canvas;
+    [SerializeField] Canvas savedCanvas;
     RectTransform root,view,worldOverlay;
     readonly RectTransform[] sequence=new RectTransform[6];
     readonly List<Enemy> actors=new List<Enemy>();
@@ -30,26 +31,40 @@ public sealed partial class StageCombatController : MonoBehaviour
     List<Vector2Int> attackArea=new List<Vector2Int>();
     readonly Color dark=new Color(.065f,.08f,.105f),panel=new Color(.12f,.15f,.19f),orange=new Color(.9f,.35f,.1f),blue=new Color(.15f,.5f,.7f);
     public Battle State=>battle;
-    public bool CanEdit=>!busy&&battle.Phase==BattlePhase.Setup;
+    public bool CanEdit=>!busy&&battle!=null&&battle.Phase==BattlePhase.Setup;
     void Start()
     {
         stage=GetComponent<Stage>();worldCamera=Camera.main;
         if(!stage.IsInitialized||worldCamera==null){Debug.LogError("Stage combat requires GameManager initialization and Main Camera.");enabled=false;return;}
+        InitializeCanvas();
+        foreach(var old in FindObjectsByType<BagPanelUI>(FindObjectsInactive.Include,FindObjectsSortMode.None))old.gameObject.SetActive(false);
+        actors.Clear();actors.Add(stage.Enemy);
+        bagOpen=false;bagProgress=0;settingsOpen=false;rewardInfoOpen=false;costumeOpen=false;
+        ResetRun();
+    }
+    void InitializeCanvas()
+    {
         font=Resources.Load<Font>("UI/NanumGothic");
         if(font==null)font=Font.CreateDynamicFontFromOSFont("Malgun Gothic",16);
-        foreach(var old in FindObjectsByType<BagPanelUI>(FindObjectsInactive.Include,FindObjectsSortMode.None))old.gameObject.SetActive(false);
+        canvas=savedCanvas;
+        if(canvas==null)
+        {
         var go=new GameObject("Combat Canvas",typeof(RectTransform),typeof(Canvas),typeof(CanvasScaler),typeof(GraphicRaycaster));go.transform.SetParent(transform,false);
         canvas=go.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.sortingOrder=100;canvas.pixelPerfect=true;
         var scale=go.GetComponent<CanvasScaler>();scale.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scale.referenceResolution=new Vector2(1440,900);scale.screenMatchMode=CanvasScaler.ScreenMatchMode.Expand;
-        root=go.GetComponent<RectTransform>();
-        // The existing TestStage scene already owns an Input System EventSystem.
-        actors.Add(stage.Enemy);
-        ResetRun();
+        savedCanvas=canvas;
+        }
+        root=canvas.GetComponent<RectTransform>();RegisterSavedUI();
     }
     void Update()
     {
         AnimateHUD();
         if(battle!=null&&!busy&&dragCard==null&&Keyboard.current!=null&&Keyboard.current.tabKey.wasPressedThisFrame){bagOpen=!bagOpen;Refresh();}
+        if(battle!=null&&CanEdit&&bagOpen&&dragCard==null&&Keyboard.current!=null)
+        {
+            if(Keyboard.current.qKey.wasPressedThisFrame)ChangeBagPage(-1);
+            else if(Keyboard.current.eKey.wasPressedThisFrame)ChangeBagPage(1);
+        }
     }
     public void ResetRun()
     {
@@ -99,6 +114,12 @@ public sealed partial class StageCombatController : MonoBehaviour
         DrawHUD();FinishUIUpdate();
     }
     List<Card> Stored()=>battle.Owned.Where(c=>!battle.Slots.Contains(c)).ToList();
+    public void ChangeBagPage(int direction)
+    {
+        if(!CanEdit||!bagOpen||dragCard!=null)return;
+        int next=Mathf.Clamp(page+direction,0,Mathf.Max(0,(Stored().Count-1)/6));
+        if(next==page)return;page=next;Refresh();
+    }
     RectTransform DrawCard(Transform parent,Card c,float x,float y,float w,float h,string caption,Action click,bool locked=false)
     {
         var r=Box(parent,"Card",x,y,w,h,c==selected?new Color(.32f,.25f,.13f):dark);
@@ -168,7 +189,8 @@ public sealed partial class StageCombatController : MonoBehaviour
             if(battle.Enemies.All(e=>e.HP<=0))break;
             activeSlot=Array.IndexOf(battle.Slots,card);attackArea=battle.Area(card);Refresh();
             var r=activeSlot>=0?sequence[activeSlot]:null;
-            for(float t=0;t<1;t+=Time.deltaTime/.18f){if(r!=null)r.localScale=Vector3.one*(1+.07f*Mathf.Sin(t*Mathf.PI));yield return null;}
+            var restScale=r!=null?r.localScale:Vector3.one;
+            for(float t=0;t<1;t+=Time.deltaTime/.18f){if(r!=null)r.localScale=restScale*(1+.07f*Mathf.Sin(t*Mathf.PI));yield return null;}
             if(Rules.Movement(card.Id))
             {
                 battle.Moves=Rules.MoveRange(card);choosingMove=true;moveDestination=null;attackArea.Clear();Refresh();

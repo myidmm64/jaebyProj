@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace WizardCombat
 {
-    public enum BattlePhase { Setup, Move, Reward, Defeat }
+    public enum BattlePhase { Setup, Move, Reward, Defeat, TurnReward }
     public sealed class Card
     {
         public int Id, Star = 1, Life;
@@ -15,10 +15,10 @@ namespace WizardCombat
     public sealed class Foe
     {
         public Vector2Int Cell;
-        public int HP;
+        public int HP, MaxHP;
         public bool Ranged;
         public List<Vector2Int> Intent = new List<Vector2Int>();
-        public Foe Copy() => new Foe { Cell = Cell, HP = HP, Ranged = Ranged, Intent = new List<Vector2Int>(Intent) };
+        public Foe Copy() => new Foe { Cell = Cell, HP = HP, MaxHP = MaxHP, Ranged = Ranged, Intent = new List<Vector2Int>(Intent) };
     }
     public static class Rules
     {
@@ -71,6 +71,8 @@ namespace WizardCombat
         public List<Card> Owned = new List<Card>();
         public Card[] Slots = new Card[6];
         public int SequenceCapacity => Mathf.Clamp(Turn,1,Slots.Length);
+        public const int TurnCardInterval=2;
+        public int LastCardSupplyTurn=-1;
         public List<Foe> Enemies = new List<Foe>();
         public List<int> Costumes = new List<int>();
         public int Equipped = -1;
@@ -100,8 +102,8 @@ namespace WizardCombat
             Player=cells.OrderBy(p=>p.x).ThenBy(p=>Mathf.Abs(p.y-Size/2)).First();
             Enemies.Clear();
             foreach(var p in cells.Where(p=>p!=Player).OrderByDescending(p=>p.x).ThenBy(p=>Mathf.Abs(p.y-Player.y)).Take(Mathf.Min(2+Wave/2,5)))
-                Enemies.Add(new Foe { Cell=p,HP=18+Wave*6,Ranged=Enemies.Count%2==1 });
-            Phase=BattlePhase.Setup; Moves=2; Plan(); Say($"웨이브 {Wave} 시작");
+                Enemies.Add(new Foe { Cell=p,HP=18+Wave*6,MaxHP=18+Wave*6,Ranged=Enemies.Count%2==1 });
+            Moves=2; Plan(); Say($"웨이브 {Wave} 시작");PrepareTurnReward();
         }
         public void Plan()
         {
@@ -153,6 +155,26 @@ namespace WizardCombat
             int slot=Array.IndexOf(Slots,a); if(slot<0)slot=Array.IndexOf(Slots,b);
             var c=new Card(a.Id,a.Star+1); Remove(a); Remove(b); Owned.Add(c); if(slot>=0)Slots[slot]=c;
             Say($"{Rules.Names[c.Id]} ★{c.Star} 합체 · 수명 초기화");return c;
+        }
+        public void SortCards()
+        {
+            if(Phase!=BattlePhase.Setup)return;
+            Owned=Owned.OrderBy(c=>c.Id<4||Rules.Movement(c.Id)?0:1).ThenBy(c=>c.Id).ThenByDescending(c=>c.Star).ThenBy(c=>c.Life<0?int.MaxValue:c.Life).ToList();
+        }
+        public int AutoMerge()
+        {
+            if(Phase!=BattlePhase.Setup)return 0;
+            int count=0;
+            while(true)
+            {
+                var pair=Owned.Where(c=>c.Id!=11&&c.Star<3).GroupBy(c=>(c.Id,c.Star)).FirstOrDefault(g=>g.Count()>=2);
+                if(pair==null)break;
+                // Prefer bag cards; when equipped cards merge, retain the earliest slot.
+                var cards=pair.OrderBy(c=>Array.IndexOf(Slots,c)).Take(2).ToArray();
+                if(Merge(cards[0],cards[1])==null)break;
+                count++;
+            }
+            SortCards();Say(count>0?$"자동 합성 {count}회 완료":"합성 가능한 카드가 없습니다");return count;
         }
         public void Remove(Card c) { Owned.Remove(c); for(int i=0;i<6;i++)if(Slots[i]==c)Slots[i]=null; }
         public void Equip(int index) { if(Phase==BattlePhase.Setup && index>=-1 && index<Costumes.Count)Equipped=index; }
@@ -213,6 +235,7 @@ namespace WizardCombat
         }
         public Card[] BeginAttack()
         {
+            if(Phase==BattlePhase.TurnReward||Phase==BattlePhase.Reward||Phase==BattlePhase.Defeat)return new Card[0];
             WeaponUsed=false;NormalHit=false;Focus=0;Ignite=0;
             return Slots.Take(SequenceCapacity).Where(c=>c!=null).ToArray();
         }
@@ -232,6 +255,7 @@ namespace WizardCombat
                 }
             }
             Moves=2;Phase=HP<=0?BattlePhase.Defeat:BattlePhase.Setup;Plan();
+            if(Phase!=BattlePhase.Defeat)PrepareTurnReward();
         }
         Vector2Int StepToward(Vector2Int start,Vector2Int goal)
         {
@@ -239,6 +263,20 @@ namespace WizardCombat
             while(q.Count>0){var p=q.Dequeue();foreach(var d in new[]{Vector2Int.left,Vector2Int.right,Vector2Int.up,Vector2Int.down})
             {var n=p+d;if(n==goal)return p==start?start:first[p];if(!Valid(n)||At(n)!=null||first.ContainsKey(n))continue;first[n]=p==start?n:first[p];q.Enqueue(n);}}
             return start;
+        }
+        void PrepareTurnReward()
+        {
+            if(Turn-LastCardSupplyTurn<TurnCardInterval){Phase=BattlePhase.Setup;Rewards.Clear();return;}
+            Phase=BattlePhase.TurnReward;Rewards.Clear();
+            var pool=Enumerable.Range(0,13).Where(id=>id!=11).ToList();
+            for(int i=0;i<3;i++){int index=UnityEngine.Random.Range(0,pool.Count);Rewards.Add(new Card(pool[index]));pool.RemoveAt(index);}
+            Say($"{Turn}턴 시작 · 카드 3장 중 1장을 선택하세요");
+        }
+        public void ChooseTurnCard(int index)
+        {
+            if(Phase!=BattlePhase.TurnReward||index<0||index>=Rewards.Count)return;
+            var card=Rewards[index];Owned.Add(card);LastCardSupplyTurn=Turn;Rewards.Clear();Phase=BattlePhase.Setup;
+            Say($"턴 카드 획득: {Rules.Names[card.Id]}");
         }
         void PrepareRewards()
         {
@@ -249,7 +287,7 @@ namespace WizardCombat
             Costumes.Add(1); if(Equipped<0 && Costumes.Count==1)Equipped=0;
             Say("코스튬 획득: 잿불의 폭렬술사 ★1");
         }
-        public void Reward(int index) {if(Phase!=BattlePhase.Reward||index<0||index>=Rewards.Count)return;Owned.Add(Rewards[index]);Rewards.Clear();Wave++;StartWave();}
+        public void Reward(int index) {if(Phase!=BattlePhase.Reward||index<0||index>=Rewards.Count)return;Owned.Add(Rewards[index]);LastCardSupplyTurn=Turn;Rewards.Clear();Wave++;StartWave();}
         public Battle Copy()
         {
             var b=(Battle)MemberwiseClone();b.Owned=Owned.Select(c=>c.Copy()).ToList();
