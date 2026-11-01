@@ -12,6 +12,7 @@ public sealed class CombatUIEditor : Editor
         using(new EditorGUI.DisabledScope(Application.isPlaying))
         {
             PreviewButton("기본 HUD",CombatUIPreviewMode.HUD);
+            PreviewButton("학교 중앙 홀",CombatUIPreviewMode.Hall);
             PreviewButton("가방 펼치기",CombatUIPreviewMode.Bag);
             PreviewButton("턴 카드 선택창",CombatUIPreviewMode.TurnReward);
             PreviewButton("웨이브 보상창",CombatUIPreviewMode.WaveReward);

@@ -302,10 +302,10 @@ public static class SequenceUIBuilder
         image.Apply();
         File.WriteAllBytes("Docs/BagUI-passives.png", image.EncodeToPNG());
         var owned = ui.GetComponent<OwnedCardBagUI>();
-        owned.AddCard(new CardUIData { name = "불씨 축적", description = "카드 효과 표시 예시" });
-        owned.AddCard(new CardUIData { name = "폭렬 마법", description = "범위와 효과를 표시", rarity = "희귀",
+        owned.AddCard(new CardUIData { name = "정심", description = "카드 효과 표시 예시" });
+        owned.AddCard(new CardUIData { name = "거합·횡월", description = "범위와 효과를 표시", rarity = "희귀",
             range = new[] { new Vector2Int(1, -1), Vector2Int.right, new Vector2Int(1, 1) } });
-        owned.AddCard(new CardUIData { name = "잔류 불꽃", description = "남은 턴 표시 예시", remainingTurns = 3 });
+        owned.AddCard(new CardUIData { name = "스쳐 베기", description = "남은 턴 표시 예시", remainingTurns = 3 });
         Canvas.ForceUpdateCanvases();
         camera.Render();
         image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);

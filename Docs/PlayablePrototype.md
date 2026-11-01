@@ -93,3 +93,28 @@ TestStage 씬의 Stage 오브젝트에 StageCombatController와 Combat Canvas를
 Combat Canvas 아래 RectTransform 위치·크기·스케일·앵커와 Text 글자 크기·폰트 및 Graphic 색상을 Inspector에서 변경하고 씬을 저장하면 플레이에서도 유지한다. 카드 이름·효과·체력 등 게임 데이터와 버튼 동작은 실행 시 갱신된다. 가방 슬라이드도 편집한 위치 오프셋을 유지한다. UI 계층의 노드에 붙은 CombatUINode는 저장된 UI 연결과 레이아웃 차이를 관리하므로 제거하지 않는다. 기본 UI를 새 씬에 생성할 때는 Tools > Explosive Wizard > Prepare TestStage UI 메뉴를 사용한다.
 
 검증: Logs/EditUI-bake.log, Logs/EditableUI-check.log, Logs/SavedUI-regression.log. 편집 모드 미리보기, 게임 실행 전후 레이아웃·스타일 유지, 단일 Canvas 재사용, 실제 보상 버튼 연결과 가방 동작을 확인했다.
+
+
+## 거합 카드 전환
+
+최신 카드 기획은 IaiConcept-v3.md를 따른다. 폭렬→거합, 마나→집중 스택으로 바꿨으며 예리함(다음 타격 고정 피해)과 집중(전투 중 유지되는 자원)을 분리했다. 견제 베기·연속 베기·칼집 치기는 앞 1칸, 찌르기·스쳐 베기는 직선 2칸, 반월 베기·거합·횡월은 바로 오른쪽 세로 3칸, 거합·일섬은 직선 3칸이다. 비기·단공은 전방으로 1→3→5칸씩 넓어지는 9칸 부채꼴이다. 카드 그림·미리보기·실제 판정이 같은 정의를 사용한다. 집중 상한 12, 거합 전량 소비, 빗나갈 때 자원·버프 보존, 턴 사이 유지 및 전투 종료 시 초기화를 유지한다. 검술부 수련복의 마력도는 턴당 첫 집중 획득을 성급만큼 강화하고 궁극기는 비기·단공을 지급한다. 검증 로그: Logs/IaiCombat-check.log.
+
+
+## PixelLab 아트 실제 적용·여성 캐주얼 플레이어
+
+플레이어를 크림색 후드·남색 조거 팬츠·운동화·포니테일의 여성 거합 검사로 변경했다. Player-IaiStudent.png의 기존 GUID를 유지해 새 이미지로 교체했으며 32×32·11색·반투명 픽셀 없음이다. 생성 원본은 Originals/Player-CasualWoman.png, 프롬프트는 Docs/PixelLab-CasualWoman.json에 보관한다.
+
+TestStage 한 씬에서 StageArt 컴포넌트가 플레이어·슬라임·조약돌 정령·UI 패널 이미지와 초원/학교 바닥 및 공허 입구를 연결한다. 게임 시작은 중앙 홀이다. 공허 입장 버튼으로 제1계층 초원 전투를 시작하며 전투·웨이브 보상·패배 화면의 학교로 귀환 버튼으로 홀에 돌아온다. 재입장은 새 런이다. 계층 보스와 다계층 진행은 아직 추가하지 않았다.
+
+새 초원 잔디·흙·학교 바닥은 일반 Tilemap에 저장했다. 기존 농장 맵은 비활성 상태로 보존했다. 흙의 별도 그리드 테두리도 유지한다. 캐릭터·초상화·카드·가방·보상·버튼 패널에는 생성한 이미지를 사용하고, 드래그 복제 카드도 동일한 9-slice 패널을 유지한다. 무료로 생성한 단일 바닥 타일을 반복 사용하며 연결형 오토타일은 아니다.
+
+Stage의 StageCombatController Inspector에서 학교 중앙 홀·기본 HUD·가방·보상창 미리보기를 선택할 수 있다. StageArt의 이미지 참조를 직접 바꿀 수 있다. Tools > Explosive Wizard > Apply PixelLab Art to TestStage는 명시적으로 바닥을 다시 채우고 UI를 저장하는 메뉴다. 아트 적용 후 Play 검증: Logs/ArtIntegration-final.log, Logs/AppliedArt-regression.log. 실제 렌더 이미지: Docs/Art-Hall-preview.png, Docs/Art-Meadow-preview.png.
+
+
+## 사용자 제공 카드 프레임·별 이미지
+
+Assets/4.UI/Cards/CardFrame.png와 CardStar.png에 제공한 원본 PNG를 복사했다. 프레임은 비율을 유지하는 Simple Image로 표시하며 HUD의 일반 패널과 분리한다. 좌상단은 예상 피해, 우상단은 실제 별 이미지 개수로 성급을 표시한다. 중앙 분류(계열/종류), 바로 아래 이름, 중하단 설명, 좌하단 남은 턴 숫자, 우하단 범위 그림 순서다. 무제한은 -1, 궁극기는 남은 1을 표시한다. 이동·서포트 피해는 0이고 이동 이후 확정할 수 없는 공격은 ?로 표시한다.
+
+장착 카드 피해는 시퀀스 순서 예측을 사용한다. 가방·보상 카드는 현재 위치에서 해당 카드만 사용했을 때의 피해를 상태 복사본으로 계산한다. 원본 집중·버프·적 체력은 바꾸지 않는다. 범위 그림은 파란 현재 위치와 실제 범위 칸만 표시하며 빈 그리드는 그리지 않는다. 새 카드 요소는 의미별 이름을 부여해 Inspector에서 위치와 글자 크기를 개별 조정할 수 있다. 드래그 복제 카드도 프레임·별·범위를 그대로 유지한다.
+
+CombatCardView.cs가 카드 배치를 담당한다. Tools > Explosive Wizard > Apply Custom Card Frame 메뉴는 기존 지형을 재작성하지 않고 카드 참조와 씬 UI 미리보기만 저장한다. 검증 로그: Logs/CustomCard-check.log. 렌더 확인: Docs/CustomCards-preview.png 및 Docs/CustomCards-reward.png.

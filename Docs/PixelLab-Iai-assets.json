@@ -1,0 +1,122 @@
+[
+  {
+    "file": "Enemy-PebbleSpirit.png",
+    "size": [
+      32,
+      32
+    ],
+    "visible_colors": 5,
+    "partial_alpha": 0,
+    "bounds": [
+      1,
+      2,
+      31,
+      30
+    ]
+  },
+  {
+    "file": "Enemy-Slime.png",
+    "size": [
+      32,
+      32
+    ],
+    "visible_colors": 5,
+    "partial_alpha": 0,
+    "bounds": [
+      0,
+      1,
+      32,
+      32
+    ]
+  },
+  {
+    "file": "Object-VoidEntrance.png",
+    "size": [
+      32,
+      32
+    ],
+    "visible_colors": 5,
+    "partial_alpha": 0,
+    "bounds": [
+      0,
+      0,
+      32,
+      32
+    ]
+  },
+  {
+    "file": "Player-IaiStudent.png",
+    "size": [
+      32,
+      32
+    ],
+    "visible_colors": 11,
+    "partial_alpha": 0,
+    "bounds": [
+      6,
+      2,
+      26,
+      30
+    ]
+  },
+  {
+    "file": "Tile-AcademyHall.png",
+    "size": [
+      32,
+      32
+    ],
+    "visible_colors": 2,
+    "partial_alpha": 0,
+    "bounds": [
+      0,
+      0,
+      32,
+      32
+    ]
+  },
+  {
+    "file": "Tile-MeadowDirt.png",
+    "size": [
+      32,
+      32
+    ],
+    "visible_colors": 2,
+    "partial_alpha": 0,
+    "bounds": [
+      0,
+      0,
+      32,
+      32
+    ]
+  },
+  {
+    "file": "Tile-MeadowGrass.png",
+    "size": [
+      32,
+      32
+    ],
+    "visible_colors": 2,
+    "partial_alpha": 0,
+    "bounds": [
+      0,
+      0,
+      32,
+      32
+    ]
+  },
+  {
+    "file": "UI-IaiPanel.png",
+    "size": [
+      32,
+      32
+    ],
+    "visible_colors": 7,
+    "partial_alpha": 0,
+    "bounds": [
+      0,
+      0,
+      32,
+      32
+    ]
+  }
+]

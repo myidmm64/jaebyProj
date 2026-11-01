@@ -1,0 +1,90 @@
+{
+  "service": "PixelLab web creator",
+  "model": "Create S-XL image (new)",
+  "size": [
+    32,
+    32
+  ],
+  "postprocess": "PixelLab Reduce colors, custom palette, dithering None",
+  "originalPrompts": [
+    {
+      "prompt": "One empty square UI panel for a magic academy iaijutsu roguelike. Flat front view, bold arcade poster styling. Near-black plum interior, vivid orange frame, one small hot-magenta angular sword-slash accent at a corner. Chunky stepped corners and a strong dark outline. Native 32x32 pixel art, 2-pixel dark outer outline. Exactly one flat base tone and one dark shadow tone per material, no highlight colors. Nine-slice friendly: decorations confined to the outer 6 pixels, straight repeatable edges, and a large plain center for text added later. Transparent background outside the panel. No text, icons, logo, flame decoration, perspective, gradients, glow, texture, dithering, anti-aliasing or animation frames."
+    },
+    {
+      "prompt": "One circular void entrance embedded in the floor of a magic academy, viewed directly from above. A chunky near-black stone ring surrounding a flat deep-purple opening. Three large angular violet fissures suggest impossible depth using solid flat shapes only. No emitted light or particles. Centered inside the central 28x28 pixels of a 32x32 canvas. Near-black 1 to 2 pixel outlines, two flat tones per material, hard square pixels. Transparent background outside the ring. No stairs, standing doorway, room, characters, letters, glow, gradients, dithering, anti-aliasing, animation frames or semi-transparent effects."
+    },
+    {
+      "prompt": "One seamless 32x32 square floor tile for the central hall of a magic academy, viewed directly from above. Large pale grey-violet stone slab shapes with restrained dark plum seams. Simple geometric school architecture. Flat walkable floor only, low visual contrast. One base tone and one shadow tone per material. Seamless repeating edges. Opaque background. Crisp hard pixels. No walls, furniture, portal, characters, letters, perspective, heavy texture, highlights, gradients, anti-aliasing or glow."
+    },
+    {
+      "prompt": "One seamless 32x32 square tile of warm ochre dirt path through a meadow, strict top-down view. Mostly clean flat ground with a few large earthy shadow marks. One ochre base tone and one dark terracotta shadow tone only. Simple dirt material matching a green meadow tileset. Seamless repeating edges, opaque background, flat walkable floor. No individual black tile frame, raised cliffs, objects, fine texture, highlights, gradients, glow, dithering, anti-aliasing, text, numbers or animation frames."
+    },
+    {
+      "prompt": "One seamless 32x32 square tile of muted green meadow grass for a top-down tactical roguelike. Broad flat areas with sparse chunky grass marks. One green base tone and one darker green shadow tone only. Crisp hard square pixels, low detail, lower contrast than characters. Seamless repeating edges, opaque background. No individual tile border, flowers, trees, objects, highlights, gradients, glow, dithering, anti-aliasing, text, numbers or animation frames."
+    },
+    {
+      "prompt": "One small pebble spirit enemy facing right, slightly viewed from above, non-isometric. A squat round grey stone body, two chunky pebble arms, two tiny stone feet, simple violet eyes, and one broad dark-purple crack. Cute but hostile. Small and simple, clearly distinct from a large armored golem. No weapon, armor, moss, or floating fragments. Entire sprite including outlines fits inside the central 28x28 pixels. Transparent background. One enemy only. Native 32x32 pixel art. Crisp square pixels, chunky readable shapes. Near-black outlines, 1 to 2 pixels thick on the native grid. Exactly two flat tones per material: one base color and one dark shadow color. Upper-left lighting, no highlight colors. No anti-aliasing, gradients, blur, glow, dithering, fine texture, text, numbers, or animation frames."
+    },
+    {
+      "prompt": "One small meadow slime enemy facing right, slightly viewed from above, non-isometric. Squat lime-green blob with a wide base, two large simple dark eyes, and one small dark-purple core represented by a solid marking. Opaque body. Cute but slightly eerie. Very simple rounded silhouette with large color clusters. No accessories, particles, or transparent jelly effects. Entire sprite including outlines fits inside the central 28x28 pixels. Transparent background. One enemy only. Native 32x32 pixel art. Crisp square pixels, chunky readable shapes. Near-black outlines, 1 to 2 pixels thick on the native grid. Exactly two flat tones per material: one base color and one dark shadow color. Upper-left lighting, no highlight colors. No anti-aliasing, gradients, blur, glow, dithering, fine texture, text, numbers, or animation frames."
+    },
+    {
+      "prompt": "One young magic academy student skilled in iaijutsu. Single full-body idle sprite facing right, slightly viewed from above, non-isometric. Large head, short body, short black hair. Dark navy school uniform with vivid magenta collar and waist sash. One katana sheathed at the waist, one hand resting on the sword hilt. Calm ready-to-draw stance. Emphasize the silhouette of the sword and scabbard. No wizard hat or staff. Entire character including outlines fits inside the central 28x28 pixels. Transparent background. One character only. Native 32x32 pixel art. Crisp square pixels, chunky readable shapes. Near-black outlines, 1 to 2 pixels thick on the native grid. Exactly two flat tones per material: one base color and one dark shadow color. Upper-left lighting, no highlight colors. No anti-aliasing, gradients, blur, glow, dithering, fine texture, text, numbers, or animation frames."
+    }
+  ],
+  "palettes": {
+    "player": [
+      "#15121F",
+      "#293A74",
+      "#182042",
+      "#E52D86",
+      "#8C1D56",
+      "#F3C29D",
+      "#B97862",
+      "#C4C9D4",
+      "#717A91"
+    ],
+    "slime": [
+      "#15121F",
+      "#8BCB36",
+      "#447A26",
+      "#8E3EC8",
+      "#482660"
+    ],
+    "pebble": [
+      "#15121F",
+      "#969AA7",
+      "#535966",
+      "#8E3EC8",
+      "#482660"
+    ],
+    "grass": [
+      "#749C3B",
+      "#4A6B2B"
+    ],
+    "dirt": [
+      "#C58D42",
+      "#8B5832"
+    ],
+    "hall": [
+      "#B8B4CC",
+      "#77728F"
+    ],
+    "void": [
+      "#15121F",
+      "#969AA7",
+      "#535966",
+      "#8E3EC8",
+      "#482660"
+    ],
+    "ui": [
+      "#15121F",
+      "#2C193B",
+      "#1C1429",
+      "#FF8B2A",
+      "#B84C20",
+      "#E52D86",
+      "#8C1D56"
+    ]
+  }
+}

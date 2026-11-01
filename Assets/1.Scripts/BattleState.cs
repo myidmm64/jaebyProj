@@ -22,11 +22,11 @@ namespace WizardCombat
     }
     public static class Rules
     {
-        public static readonly string[] Names = { "마력탄", "집중", "관통탄", "속사", "불씨탄", "응축", "화염고리", "잔불구슬", "점화", "폭렬", "폭렬창", "대폭렬", "이동" };
+        public static readonly string[] Names = { "견제 베기", "예리함", "찌르기", "연속 베기", "칼집 치기", "정심", "반월 베기", "스쳐 베기", "검의 호흡", "거합·횡월", "거합·일섬", "비기·단공", "보법" };
         public static readonly string[] Descriptions = {
-            "전방 첫 적에게 피해", "다음 공격 첫 타격 강화", "직선 위 모든 적 관통", "전방 첫 적에게 2회 공격",
-            "명중 시 마나 충전", "적이 없어도 마나 충전", "주변 공격 · 명중 시 충전", "강한 탄환 · 명중 시 충전",
-            "다음 전량 소비 마법 강화", "마나 전량 소비 · 앞줄 폭발", "마나 전량 소비 · 직선 관통", "마나 전량 소비 · 3×3 폭발\n미사용이어도 이번 턴 소멸", "카드 차례에 목적지를 선택해 이동" };
+            "앞 1칸 베기", "다음 공격 첫 타격 강화", "직선 2칸 찌르기", "앞 1칸 2회 베기",
+            "앞 1칸 명중 시 집중 획득", "적 없이 집중 획득", "전방 3칸 베기 · 명중 시 집중 획득", "직선 2칸 첫 적 · 명중 시 집중 획득",
+            "다음 거합 강화", "집중 전량 소모 · 전방 3칸 횡베기", "집중 전량 소모 · 직선 3칸 베기", "집중 전량 소모 · 부채꼴 9칸 베기\n미사용이어도 이번 턴 소멸", "카드 차례에 목적지를 선택해 이동" };
         static readonly int[][] Damages = { new[]{8,12,18}, new[]{8,12,18}, new[]{6,9,14}, new[]{4,6,9}, new[]{6,9,14}, new[]{0,0,0}, new[]{4,6,9}, new[]{10,15,22}, new[]{0,0,0}, new[]{8,12,18}, new[]{10,15,22}, new[]{40,60,90} };
         public static int Damage(Card c) => Movement(c.Id)?0:Damages[c.Id][c.Star-1];
         public static int Lifetime(int id) => new[]{-1,4,6,6,-1,6,-1,5,4,6,4,1,-1}[id];
@@ -42,29 +42,28 @@ namespace WizardCombat
         {
             if(Movement(c.Id))return $"최대 {MoveRange(c)}칸 이동\n노란 점 선택\n새 위치에서 다음 카드";
             if(c.Id==1)return $"다음 공격 첫 타격\n피해 +{Damage(c)}";
-            if(c.Id==5)return $"마나 +{Charge(c)} 충전\n적이 없어도 사용";
-            if(c.Id==8)return $"다음 전량 소비 마법\n피해 +{Mathf.RoundToInt(Boost(c)*100)}%";
-            if(Consumer(c.Id))return $"마나 전부 소모\n피해 {Damage(c)} + 소비량 × {Coefficient(c)}\n"+(c.Id==11?"마나 0도 사용 가능":"마나 1 이상 필요");
-            if(c.Id==3)return $"피해 {Damage(c)} × 2회\n전방 첫 적 공격";
-            if(Charge(c)>0)return $"피해 {Damage(c)}\n명중 시 마나 +{Charge(c)}";
-            return $"피해 {Damage(c)}\n"+(c.Id==2?"직선 위 모든 적 관통":"전방 첫 적 공격");
+            if(c.Id==5)return $"집중 +{Charge(c)}\n적이 없어도 사용";
+            if(c.Id==8)return $"다음 거합 공격\n피해 +{Mathf.RoundToInt(Boost(c)*100)}%";
+            if(Consumer(c.Id))return $"집중 전부 소모\n피해 {Damage(c)} + 소비량 × {Coefficient(c)}\n"+(c.Id==11?"집중 0도 사용 가능":"집중 1 이상 필요");
+            if(c.Id==3)return $"피해 {Damage(c)} × 2회\n바로 앞 1칸 베기";
+            if(Charge(c)>0)return $"피해 {Damage(c)}\n명중 시 집중 +{Charge(c)}";
+            return $"피해 {Damage(c)}\n"+(c.Id==2?"직선 2칸 모두 찌르기":"바로 앞 1칸 베기");
         }
         public static List<Vector2Int> Pattern(int id,int star=1)
         {
             var cells = new List<Vector2Int>();
             if(Movement(id)){int range=MoveRange(new Card(id,star));for(int x=-range;x<=range;x++)for(int y=-range;y<=range;y++)if(Mathf.Abs(x)+Mathf.Abs(y)<=range&&(x!=0||y!=0))cells.Add(new Vector2Int(x,y));return cells;}
             if (Support(id)) return cells;
-            if (id == 6) cells.AddRange(new[]{Vector2Int.up,Vector2Int.right,Vector2Int.down,Vector2Int.left});
-            else if (id == 9) cells.AddRange(new[]{new Vector2Int(1,-1),new Vector2Int(1,0),new Vector2Int(1,1)});
-            else if (id == 11) { for(int x=1;x<=3;x++) for(int y=-1;y<=1;y++) cells.Add(new Vector2Int(x,y)); }
-            else for(int x=1;x<=(id == 10 ? 3 : 2);x++) cells.Add(new Vector2Int(x,0));
+            if (id == 6 || id == 9) cells.AddRange(new[]{new Vector2Int(1,-1),new Vector2Int(1,0),new Vector2Int(1,1)});
+            else if (id == 11) { for(int x=1;x<=3;x++) for(int y=1-x;y<x;y++) cells.Add(new Vector2Int(x,y)); }
+            else for(int x=1;x<=(id == 10 ? 3 : id == 2 || id == 7 ? 2 : 1);x++) cells.Add(new Vector2Int(x,0));
             return cells;
         }
     }
     // Small deterministic state model, shared by execution, preview and editor smoke checks.
     public sealed class Battle
     {
-        public int Size = 8, HP = 60, Mana, Gauge, Gold, Turn = 1, Wave = 1, Moves = 2;
+        public int Size = 8, HP = 60, Concentration, Gauge, Gold, Turn = 1, Wave = 1, Moves = 2;
         public bool[,] Enabled;
         public Vector2Int Player, Origin;
         public BattlePhase Phase;
@@ -80,8 +79,8 @@ namespace WizardCombat
         public List<string> Log = new List<string>();
         public int ActiveStar => Equipped >= 0 && Equipped < Costumes.Count ? Costumes[Equipped] : 0;
         public bool WeaponUsed, NormalHit;
-        public int Focus;
-        public float Ignite;
+        public int Sharpness;
+        public float BreathBoost;
         public Battle(int size = 8)
         {
             Size = size; Enabled = new bool[size,size];
@@ -95,7 +94,7 @@ namespace WizardCombat
         public void Say(string s) { Log.Add(s); if(Log.Count>14) Log.RemoveAt(0); }
         public void StartWave()
         {
-            Mana=0; Player=new Vector2Int(0,Size/2);
+            Concentration=0; Player=new Vector2Int(0,Size/2);
             // Enabled grids remain authored by Stage; select valid unoccupied cells.
             var cells = new List<Vector2Int>();
             for(int x=0;x<Size;x++) for(int y=0;y<Size;y++) if(Valid(new Vector2Int(x,y))) cells.Add(new Vector2Int(x,y));
@@ -114,7 +113,7 @@ namespace WizardCombat
                 {
                     var delta=Player-e.Cell;
                     var d=Mathf.Abs(delta.x)>=Mathf.Abs(delta.y)?new Vector2Int(delta.x>=0?1:-1,0):new Vector2Int(0,delta.y>=0?1:-1);
-                    for(int i=1;i<=4;i++) { var p=e.Cell+d*i; if(!Valid(p))break; e.Intent.Add(p); }
+                    for(int i=1;i<=3;i++) { var p=e.Cell+d*i; if(!Valid(p))break; e.Intent.Add(p); }
                 }
                 else foreach(var d in new[]{Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right}) if(Valid(e.Cell+d)) e.Intent.Add(e.Cell+d);
             }
@@ -187,7 +186,7 @@ namespace WizardCombat
         public void Ultimate()
         {
             if(Phase!=BattlePhase.Setup || Gauge<100 || ActiveStar==0)return;
-            Gauge-=100; Owned.Add(new Card(11,ActiveStar));Say("대폭렬 획득! 이번 턴 미사용 시에도 소멸");
+            Gauge-=100; Owned.Add(new Card(11,ActiveStar));Say("비기·단공 획득! 이번 턴 미사용 시에도 소멸");
         }
         public List<Vector2Int> Area(Card c)
         {
@@ -207,22 +206,22 @@ namespace WizardCombat
         {
             if(amount<=0)return;
             if(!WeaponUsed && ActiveStar>0) { amount+=ActiveStar; WeaponUsed=true; }
-            Mana=Mathf.Min(12,Mana+amount);
+            Concentration=Mathf.Min(12,Concentration+amount);
         }
         public int Execute(Card c)
         {
             if(Rules.Movement(c.Id))return 0;
-            if(c.Id==1){Focus+=Rules.Damage(c);Say("집중: 다음 공격 강화");return 0;}
-            if(c.Id==5){Gain(Rules.Charge(c));Say($"응축: 마나 {Mana}");return 0;}
-            if(c.Id==8){Ignite+=Rules.Boost(c);Say("점화: 다음 소비 마법 강화");return 0;}
+            if(c.Id==1){Sharpness+=Rules.Damage(c);Say("예리함: 다음 공격 강화");return 0;}
+            if(c.Id==5){Gain(Rules.Charge(c));Say($"정심: 집중 {Concentration}");return 0;}
+            if(c.Id==8){BreathBoost+=Rules.Boost(c);Say("검의 호흡: 다음 거합 강화");return 0;}
             var area=Area(c); var targets=Enemies.Where(e=>e.HP>0 && area.Contains(e.Cell)).ToList();
-            if(targets.Count==0 || (Rules.Consumer(c.Id)&&c.Id!=11&&Mana==0)){Say(Rules.Names[c.Id]+": 조건 미충족");return 0;}
-            int spent=Rules.Consumer(c.Id)?Mana:0; if(Rules.Consumer(c.Id))Mana=0;
-            int first=Mathf.FloorToInt((Rules.Damage(c)+Rules.Coefficient(c)*spent+Focus)*(1+(Rules.Consumer(c.Id)?Ignite:0)));
+            if(targets.Count==0 || (Rules.Consumer(c.Id)&&c.Id!=11&&Concentration==0)){Say(Rules.Names[c.Id]+": 조건 미충족");return 0;}
+            int spent=Rules.Consumer(c.Id)?Concentration:0; if(Rules.Consumer(c.Id))Concentration=0;
+            int first=Mathf.FloorToInt((Rules.Damage(c)+Rules.Coefficient(c)*spent+Sharpness)*(1+(Rules.Consumer(c.Id)?BreathBoost:0)));
             foreach(var e in targets) {e.HP-=first; if(c.Id==3 && e.HP>0)e.HP-=Rules.Damage(c);}
-            Focus=0;if(Rules.Consumer(c.Id))Ignite=0;
+            Sharpness=0;if(Rules.Consumer(c.Id))BreathBoost=0;
             Gain(Rules.Charge(c)); if(c.Id!=11)NormalHit=true;
-            Say($"{Rules.Names[c.Id]}: {first}"+(c.Id==3?" + 추가 타격":"")+$" / {targets.Count}명 · 마나 {Mana}");
+            Say($"{Rules.Names[c.Id]}: {first}"+(c.Id==3?" + 추가 타격":"")+$" / {targets.Count}명 · 집중 {Concentration}");
             if(c.Id==11)Remove(c);
             return first;
         }
@@ -236,16 +235,16 @@ namespace WizardCombat
         public Card[] BeginAttack()
         {
             if(Phase==BattlePhase.TurnReward||Phase==BattlePhase.Reward||Phase==BattlePhase.Defeat)return new Card[0];
-            WeaponUsed=false;NormalHit=false;Focus=0;Ignite=0;
+            WeaponUsed=false;NormalHit=false;Sharpness=0;BreathBoost=0;
             return Slots.Take(SequenceCapacity).Where(c=>c!=null).ToArray();
         }
         public void FinishAttack(Card[] execution)
         {
             foreach(var c in execution)if(c.Id!=11 && c.Life>0 && --c.Life==0)Remove(c);
             foreach(var c in Owned.Where(c=>c.Id==11).ToArray())Remove(c);
-            Focus=0;Ignite=0; if(NormalHit)Gauge=Mathf.Min(100,Gauge+25);
+            Sharpness=0;BreathBoost=0; if(NormalHit)Gauge=Mathf.Min(100,Gauge+25);
             Turn++;
-            if(Enemies.All(e=>e.HP<=0)){Mana=0;Phase=BattlePhase.Reward;PrepareRewards();Say("승리! 보상 하나를 선택하세요");return;}
+            if(Enemies.All(e=>e.HP<=0)){Concentration=0;Phase=BattlePhase.Reward;PrepareRewards();Say("승리! 보상 하나를 선택하세요");return;}
             foreach(var e in Enemies.Where(e=>e.HP>0))
             {
                 if(e.Intent.Contains(Player)){HP-=e.Ranged?8:6;Say(e.Ranged?"직선 공격 -8 HP":"근접 공격 -6 HP");}
@@ -285,7 +284,7 @@ namespace WizardCombat
             Rewards.Add(duplicate!=null?new Card(duplicate.Id,duplicate.Star):new Card(5));
             Rewards.Add(new Card((Wave*3)%11));Rewards.Add(new Card(Wave%3==0?12:(Wave*3+4)%11));
             Costumes.Add(1); if(Equipped<0 && Costumes.Count==1)Equipped=0;
-            Say("코스튬 획득: 잿불의 폭렬술사 ★1");
+            Say("코스튬 획득: 검술부 수련복 ★1");
         }
         public void Reward(int index) {if(Phase!=BattlePhase.Reward||index<0||index>=Rewards.Count)return;Owned.Add(Rewards[index]);LastCardSupplyTurn=Turn;Rewards.Clear();Wave++;StartWave();}
         public Battle Copy()
@@ -296,10 +295,15 @@ namespace WizardCombat
         }
         public int[] Preview()
         {
-            var b=Copy();b.WeaponUsed=false;b.Focus=0;b.Ignite=0;var values=new int[6];
+            var b=Copy();b.WeaponUsed=false;b.Sharpness=0;b.BreathBoost=0;var values=new int[6];
             bool uncertain=false;
             var cards=b.Slots.ToArray();for(int i=0;i<b.SequenceCapacity;i++)if(cards[i]!=null && b.Enemies.Any(e=>e.HP>0))
             {if(Rules.Movement(cards[i].Id)){uncertain=true;values[i]=-1;}else values[i]=uncertain?-1:b.Execute(cards[i]);}return values;
+        }
+        public int PreviewCard(Card card)
+        {
+            if(card==null||Rules.Support(card.Id)||Rules.Movement(card.Id))return 0;
+            return Copy().Execute(card.Copy());
         }
     }
 }

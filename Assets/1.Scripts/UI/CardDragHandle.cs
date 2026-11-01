@@ -26,7 +26,9 @@ public sealed class CardDragHandle : MonoBehaviour, IPointerDownHandler, IPointe
         ghost=new GameObject("Dragged card",typeof(RectTransform),typeof(Image),typeof(CanvasGroup));
         var r=ghost.GetComponent<RectTransform>();r.SetParent(canvas.transform,false);r.pivot=source.pivot;r.sizeDelta=source.rect.size;
         r.localScale=source.lossyScale/canvas.transform.lossyScale.x*1.035f;
-        ghost.GetComponent<Image>().color=GetComponent<Image>().color;
+        var sourceImage=GetComponent<Image>();var ghostImage=ghost.GetComponent<Image>();
+        ghostImage.color=sourceImage.color;ghostImage.sprite=sourceImage.sprite;ghostImage.type=sourceImage.type;
+        ghostImage.pixelsPerUnitMultiplier=sourceImage.pixelsPerUnitMultiplier;ghostImage.preserveAspect=sourceImage.preserveAspect;ghostImage.raycastTarget=false;
         foreach(Transform child in transform)Instantiate(child,r,false);
         var cg=ghost.GetComponent<CanvasGroup>();cg.blocksRaycasts=false;cg.interactable=false;cg.alpha=.95f;
         group=GetComponent<CanvasGroup>();if(group==null)group=gameObject.AddComponent<CanvasGroup>();

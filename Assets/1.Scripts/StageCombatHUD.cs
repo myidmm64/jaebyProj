@@ -21,7 +21,7 @@ public sealed partial class StageCombatController
         {
             if(entry.unit==null||entry.bar==null)continue;
             var screen=worldCamera.WorldToScreenPoint(entry.unit.position+Vector3.up*entry.height);
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(worldOverlay,screen,null,out var point);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(worldOverlay,screen,UICamera,out var point);
             entry.bar.anchoredPosition=point;
         }
     }
@@ -59,8 +59,14 @@ public sealed partial class StageCombatController
     RectTransform Surface(Transform parent,string name,float x,float y,float w,float h)
     {
         var r=Box(parent,name,x,y,w,h,panel);
+        if(art!=null&&art.panel!=null){StylePanel(r,Color.white);return r;}
         Box(r,"Top rule",0,0,w,2,muted).GetComponent<Image>().raycastTarget=false;
         return r;
+    }
+    void StylePanel(RectTransform rect,Color tint)
+    {
+        if(art==null||art.panel==null)return;
+        var image=rect.GetComponent<Image>();image.sprite=art.panel;image.type=Image.Type.Sliced;image.pixelsPerUnitMultiplier=100f/art.panel.pixelsPerUnit;image.color=tint;
     }
     RectTransform TransparentHUD(Transform parent,string name,float x,float y,float w,float h)
     {
@@ -73,6 +79,7 @@ public sealed partial class StageCombatController
     RectTransform RoundButton(Transform parent,string label,float x,float y,float w,float h,Action action,bool enabled=true)
     {
         var r=Button(parent,label,x,y,w,h,action,enabled);r.GetComponent<Image>().enabled=false;
+        if(art!=null&&art.panel!=null){r.GetComponent<Image>().enabled=true;r.GetComponent<Button>().targetGraphic=r.GetComponent<Image>();return r;}
         var go=UINode(r,"Disc",typeof(RectTransform),typeof(CanvasRenderer),typeof(HudDisc));var shape=go.GetComponent<RectTransform>();shape.anchorMin=Vector2.zero;shape.anchorMax=Vector2.one;shape.offsetMin=shape.offsetMax=Vector2.zero;shape.SetAsFirstSibling();
         var disc=go.GetComponent<HudDisc>();disc.color=enabled?orange:panel;r.GetComponent<Button>().targetGraphic=disc;
         return r;
@@ -82,9 +89,12 @@ public sealed partial class StageCombatController
         healthBars.Clear();
         worldOverlay=Box(view,"World overlay",0,0,root.rect.width,root.rect.height,Color.clear);worldOverlay.GetComponent<Image>().raycastTarget=false;
         float w=root.rect.width,h=root.rect.height;
+        if(inHall){DrawHallHUD(w,h);return;}
         var main=TransparentHUD(view,"Concept HUD",0,0,w,h);
         var wave=TransparentHUD(main,"Wave and turn",12,12,315,56);
         Text(wave,$"WAVE {battle.Wave:00}   /   TURN {battle.Turn:00}",16,15,290,30,21);
+        Text(wave,"제1계층 · 초원",16,49,290,28,16);
+        if(art!=null)Button(main,"학교로 귀환",w-355,76,180,34,ReturnToHall,!busy);
         var coins=TransparentHUD(main,"Gold",w-360,12,180,56);Text(coins,$"●  {battle.Gold:000} GOLD",15,16,160,30,19);
         RoundButton(main,"보상",w-156,12,56,56,()=>{rewardInfoOpen=!rewardInfoOpen;settingsOpen=false;});
         RoundButton(main,"설정",w-80,12,56,56,()=>{settingsOpen=!settingsOpen;rewardInfoOpen=false;},!busy);
@@ -99,15 +109,19 @@ public sealed partial class StageCombatController
         for(int i=0;i<living.Length&&i<actors.Count;i++)DrawUnitHealth(actors[i],living[i].HP,living[i].MaxHP,new Color(.8f,.24f,.25f));
         var stats=TransparentHUD(main,"Player stats",12,100,175,355);SmallTitle(stats,"현재 스탯",14,14);
         Text(stats,$"체력\n{Mathf.Max(0,battle.HP)} / 60",14,52,150,60,22);Fill(stats,14,118,145,9,battle.HP/60f,new Color(.75f,.23f,.24f));
-        Text(stats,$"마나 충전\n{battle.Mana} / 12",14,151,150,60,22);Fill(stats,14,218,145,9,battle.Mana/12f,blue);
+        Text(stats,$"집중 스택\n{battle.Concentration} / 12",14,151,150,60,22);Fill(stats,14,218,145,9,battle.Concentration/12f,blue);
         Text(stats,$"보유 카드   {battle.Owned.Count}\n장착 카드   {battle.Slots.Count(c=>c!=null)} / {battle.SequenceCapacity}\n코스튬 성급   {battle.ActiveStar}",14,254,150,85,16);
         var portrait=Surface(main,"Portrait",12,h-270,175,178);
         Text(portrait,"플레이어",14,10,145,24,16);
+        if(art!=null&&art.player!=null)DrawPlayerPortrait(portrait,32,38,112,128);
+        else
+        {
         var head=UINode(portrait,"Face",typeof(RectTransform),typeof(CanvasRenderer),typeof(HudDisc));
         var hr=head.GetComponent<RectTransform>();hr.anchorMin=hr.anchorMax=hr.pivot=new Vector2(0,1);hr.anchoredPosition=new Vector2(50,-42);hr.sizeDelta=new Vector2(75,75);head.GetComponent<HudDisc>().color=paper;
         Box(portrait,"Eye left",69,64,5,10,dark);Box(portrait,"Eye right",97,64,5,10,dark);Box(portrait,"Mouth",78,91,12,3,dark);
         Box(portrait,"Body",53,124,70,27,battle.ActiveStar>0?orange:blue);
-        Button(main,battle.ActiveStar>0?$"폭렬술사 ★{battle.ActiveStar}":"기본 코스튬",12,h-85,175,32,()=>costumeOpen=!costumeOpen,CanEdit);
+        }
+        Button(main,battle.ActiveStar>0?$"수련복 ★{battle.ActiveStar}":"기본 코스튬",12,h-85,175,32,()=>costumeOpen=!costumeOpen,CanEdit);
         var ultimate=Surface(main,"Ultimate",196,h-270,36,178);
         Box(ultimate,"Ultimate fill",4,174-170*battle.Gauge/100f,28,170*battle.Gauge/100f,gold).GetComponent<Image>().raycastTarget=false;
         Button(main,$"궁극기 {battle.Gauge}%",12,h-50,220,40,()=>{battle.Ultimate();bagOpen=true;page=Math.Max(0,(Stored().Count-1)/6);},CanEdit&&battle.Gauge>=100&&battle.ActiveStar>0);
@@ -127,7 +141,7 @@ public sealed partial class StageCombatController
         for(int i=0;i<6;i++)
         {
             int index=i;bool locked=i>=battle.SequenceCapacity;var c=locked?null:battle.Slots[i];string caption=locked?$"{i+1}턴에 개방":c==null?$"{i+1} 빈 슬롯":busy&&activeSlot==i?"● 실행 중":Rules.Movement(c.Id)?$"{i+1} · 이동":preview[i]<0?$"{i+1} · 이동 후 결정":$"{i+1} · 예상 {preview[i]}";
-            sequence[i]=DrawCard(sequencePanel,c,12+i*152,36,142,188,caption,()=>selected=c,locked);if(!locked)AddDrop(sequence[i],index,c);
+            sequence[i]=DrawCard(sequencePanel,c,12+i*152,36,142,188,caption,()=>selected=c,locked,preview[i]);if(!locked)AddDrop(sequence[i],index,c);
         }
         bagPanel=Surface(main,"Owned bag",270,860,925,245);AddDrop(bagPanel,-1,null);
         bagGroup=Ensure<CanvasGroup>(bagPanel.gameObject);
@@ -141,7 +155,7 @@ public sealed partial class StageCombatController
         statusLine=Text(main,choosingMove?"노란 점을 선택하세요. 이동 후 다음 카드가 실행됩니다.":string.Join("  /  ",battle.Log.Skip(Math.Max(0,battle.Log.Count-1))),275,590,915,25,15);statusLine.color=paper;
         PositionDrawer(false);
         if(rewardInfoOpen)
-        {var info=Surface(main,"Wave reward info",w-312,80,285,175);Text(info,"카드 수급: 2턴마다 1장\n웨이브 클리어: 추가 1장\n클리어 직후 턴 수급 생략\n폭렬 코스튬 ★1 · 골드 10",15,15,260,145,18);}
+        {var info=Surface(main,"Wave reward info",w-312,80,285,175);Text(info,"카드 수급: 2턴마다 1장\n웨이브 클리어: 추가 1장\n클리어 직후 턴 수급 생략\n검술부 수련복 ★1 · 골드 10",15,15,260,145,18);}
         if(settingsOpen)
         {
             var settings=Surface(main,"Settings",w-312,80,300,190);Text(settings,"설정",15,12,270,35,23);
@@ -152,7 +166,7 @@ public sealed partial class StageCombatController
         if(costumeOpen)
         {
             var costume=Surface(main,"Costumes",12,h-520,350,240);Text(costume,"코스튬 / 무기",15,14,320,34,22);
-            Text(costume,battle.ActiveStar>0?$"잿불 지팡이 ★{battle.ActiveStar}\n첫 폭렬 충전에 마나 +{battle.ActiveStar}\n궁극기: 대폭렬":"기본 외형 · 전용 무기 없음",15,58,320,85,18);
+            Text(costume,battle.ActiveStar>0?$"마력도 ★{battle.ActiveStar}\n첫 거합 집중 획득에 집중 +{battle.ActiveStar}\n궁극기: 비기·단공":"기본 외형 · 전용 무기 없음",15,58,320,85,18);
             Button(costume,"코스튬 교체",15,158,155,34,()=>{battle.Equip(battle.Costumes.Count==0?-1:(battle.Equipped+2)%(battle.Costumes.Count+1)-1);SyncActors();},CanEdit);
             Button(costume,"성급 강화",180,158,155,34,()=>battle.MergeCostume(),CanEdit);Button(costume,"닫기",15,201,320,30,()=>costumeOpen=false);
         }
@@ -167,8 +181,25 @@ public sealed partial class StageCombatController
                 if(turnReward){battle.ChooseTurnCard(id);selected=offered;bagOpen=true;page=Math.Max(0,(Stored().Count-1)/6);}
                 else {battle.Reward(id);selected=null;bagOpen=false;SyncActors();}
             });}
-            Text(reward,turnReward?"선택한 카드는 가방에 추가됩니다. 턴 카드는 2턴마다 획득합니다.":"보상 획득 후 다음 웨이브를 시작합니다. 직후 턴 카드 선택은 생략합니다.",20,323,760,26,16);
+            Text(reward,turnReward?"선택한 카드는 가방에 추가됩니다. 턴 카드는 2턴마다 획득합니다.":"보상 획득 후 다음 웨이브를 시작합니다.",20,323,turnReward?760:560,26,16);
+            if(!turnReward&&art!=null)Button(reward,"학교로 귀환",600,318,180,32,ReturnToHall,!busy);
         }
-        if(battle.Phase==BattlePhase.Defeat){var over=Surface(main,"Defeat",w-512,80,500,200);Text(over,"패배",20,20,450,50,30);Button(over,"새 런 시작",20,110,460,50,ResetRun,!busy);}
+        if(battle.Phase==BattlePhase.Defeat){var over=Surface(main,"Defeat",w-512,80,500,200);Text(over,"패배",20,20,450,50,30);Button(over,art!=null?"학교로 귀환":"새 런 시작",20,110,460,50,()=>{if(art!=null)ReturnToHall();else ResetRun();},!busy);}
+    }
+    void DrawPlayerPortrait(Transform parent,float x,float y,float w,float h)
+    {
+        var rect=Box(parent,"Player portrait",x,y,w,h,Color.white);var image=rect.GetComponent<Image>();image.sprite=art.player;image.type=Image.Type.Simple;image.preserveAspect=true;image.raycastTarget=false;
+    }
+    void DrawHallHUD(float w,float h)
+    {
+        var main=TransparentHUD(view,"Hall HUD",0,0,w,h);
+        var title=Surface(main,"Hall title",18,16,700,110);
+        Text(title,"마법학교 · 중앙 홀",18,12,650,42,28);
+        Text(title,"홀 중앙의 공허 입구에서 탐험을 시작합니다.",18,65,650,30,18);
+        var info=Surface(main,"Hall player",18,h-208,190,190);Text(info,"거합 검사",14,12,160,28,18);DrawPlayerPortrait(info,40,46,110,128);
+        var enter=Surface(main,"Void entry",(w-460)*.5f,h-186,460,166);
+        Text(enter,"제1계층 · 초원",18,12,425,28,19).alignment=TextAnchor.MiddleCenter;
+        Text(enter,"슬라임 · 조약돌 정령",18,46,425,26,16).alignment=TextAnchor.MiddleCenter;
+        Button(enter,"공허 입장",70,86,320,58,EnterVoid);
     }
 }
