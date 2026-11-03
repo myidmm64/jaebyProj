@@ -633,7 +633,7 @@ PlayerSettings:
     PS4: DOTWEEN
     PS5: DOTWEEN
     QNX: DOTWEEN
-    Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY;DOTWEEN
+    Standalone: SENTIS_ANALYTICS_ENABLED;DOTWEEN;MOREMOUNTAINS_NICEVIBRATIONS_INSTALLED;APP_UI_EDITOR_ONLY
     VisionOS: DOTWEEN
     WebGL: APP_UI_EDITOR_ONLY;DOTWEEN
     Windows Store Apps: DOTWEEN
@@ -757,5 +757,3 @@ PlayerSettings:
   d3d12DeviceFilterListAsset: {fileID: 0}
   webGPUDeviceFilterListAsset: {fileID: 0}
   allowedHttpConnections: 3
-
-
