@@ -50,7 +50,7 @@ Shader "Zanshin/CombatSprite"
             half4 Frag(Varyings input) : SV_Target
             {
                 half4 color = SAMPLE_TEXTURE2D(_MainTex,sampler_MainTex,input.uv)*input.color;
-                float2 cell = floor(input.uv*64);
+                float2 cell = floor(input.uv*_MainTex_TexelSize.zw);
                 float noise = frac(sin(dot(cell,float2(12.9898,78.233)))*43758.5453);
                 clip(noise + 0.001 - _Dissolve);
                 if (_Charge > 0.001)

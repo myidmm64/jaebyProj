@@ -14,31 +14,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100003, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.44
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 100003, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.32
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100003, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.32
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100003, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.32
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100004, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: -7282886668606283007, guid: 44693bee226ea9f419b219fb4212259f, type: 3}
+      objectReference: {fileID: 21300000, guid: d3d7fec9ca1747faadd7b4b7e31ab9d6, type: 3}
     - target: {fileID: 100004, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_WasSpriteAssigned
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100025, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_Text
-      value: 32
+      value: 1600
       objectReference: {fileID: 0}
     - target: {fileID: 100030, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_IsActive
@@ -94,6 +94,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   buffs: []
-  health: 32
-  maxHealth: 32
+  health: 1600
+  maxHealth: 1600
   healthText: {fileID: 3109436800313902349}

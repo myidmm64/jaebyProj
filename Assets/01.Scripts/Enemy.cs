@@ -3,8 +3,8 @@ using UnityEngine.UI;
 
 public abstract class Enemy : CombatUnit
 {
-    [SerializeField] private long health = 100;
-    [SerializeField] private long maxHealth = 100;
+    [SerializeField] private long health = 1600;
+    [SerializeField] private long maxHealth = 1600;
     [SerializeField] private Text healthText;
     Outline targetOutline;
     Transform buffArea;
@@ -45,8 +45,7 @@ public abstract class Enemy : CombatUnit
             var heart=healthText.transform.parent.GetComponent<Image>();
             heart.rectTransform.anchoredPosition=Vector2.zero;
             var canvas=heart.GetComponentInParent<Canvas>().GetComponent<RectTransform>();
-            var visual=GetComponentInChildren<SpriteRenderer>();
-            float top=visual!=null?visual.bounds.max.y-transform.position.y:1.3f;
+            float top=GameManager.Instance.Assets.UnitHeight(state.Kind,GameManager.Instance.Run.State.Floor,boss);
             canvas.localPosition=new Vector3(0,top+.34f,0);
             targetOutline=heart.GetComponent<Outline>(); if(targetOutline==null) targetOutline=heart.gameObject.AddComponent<Outline>();
             targetOutline.effectColor=new Color(.68f,.82f,.68f,.9f); targetOutline.effectDistance=new Vector2(2,-2); targetOutline.enabled=false;

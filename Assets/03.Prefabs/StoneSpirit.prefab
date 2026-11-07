@@ -14,27 +14,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100003, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.1
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100003, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.1
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100003, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.1
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100004, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: -1573395500352284014, guid: d2f471e1ff5642b4d82d4670dcdeefb0, type: 3}
+      objectReference: {fileID: 21300000, guid: f1b51237c2b34a1f9552271f6d22d677, type: 3}
     - target: {fileID: 100004, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_WasSpriteAssigned
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100025, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_Text
-      value: 18
+      value: 2400
       objectReference: {fileID: 0}
     - target: {fileID: 100030, guid: 6157aa6cc11e4ae3b8ab10b110002001, type: 3}
       propertyPath: m_IsActive
@@ -90,8 +90,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   buffs: []
-  health: 18
-  maxHealth: 18
+  health: 2400
+  maxHealth: 2400
   healthText: {fileID: 6971120813698319256}
 
 --- !u!114 &6971120813698319256 stripped

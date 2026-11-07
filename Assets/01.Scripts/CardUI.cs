@@ -21,10 +21,12 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
     Image artwork, stateBackground;
     Text stateText;
     bool sealedCard;
+    string sealedReason="이번 턴 봉인";
     bool compactView, showingBack, flipTarget, flipChanged;
     float flipStarted=-10;
     Image cardBack;
     Text backName, backDescription;
+    Text slotBonusLabel;
     static readonly System.Collections.Generic.Dictionary<Sprite,Rect> artBounds=new System.Collections.Generic.Dictionary<Sprite,Rect>();
     T Find<T>(string child) where T:Component
     {
@@ -64,11 +66,12 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
         var type=Find<Image>("TypeBadge"); if(type!=null) type.color=TypeColor(d);
         var damage=Find<Image>("DamageBadge"); if(damage!=null)
         {
-            damage.gameObject.SetActive(!compact && d.IsAttack && !(slot>=0 && ui.Manager.Run!=null && slot==ui.Manager.Run.State.SealedSlot));
+            damage.gameObject.SetActive(!compact && d.IsAttack && !(ui.Manager.Run!=null && (ui.Manager.Run.IsCardSealed(card.Uid) || (slot>=0 && slot==ui.Manager.Run.State.SealedSlot))));
             double expected=slot>=-1 && ui.Manager.Run!=null && ui.Manager.Run.State.Phase==RunPhase.Battle
                 ?ui.Manager.Run.Preview(card):d.Value(card.Stars)*d.Hits;
             if(expected<=0)damage.gameObject.SetActive(false);
-            SetText("DamageText",GameMath.Number(expected));
+            bool average=ui.Manager.Run!=null && ui.Manager.Run.HasChanceBefore(card);
+            SetText("DamageText",(average?"~":"")+GameMath.Number(expected));
         }
         var border=Find<Image>("SelectionBorder");
         selection=border;
@@ -81,6 +84,7 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
         group=GetComponent<CanvasGroup>(); if(group==null) group=gameObject.AddComponent<CanvasGroup>();
         group.alpha=1; group.blocksRaycasts=true;
         layoutPosition=GetComponent<RectTransform>().anchoredPosition;
+        RefreshSlotBonus();
     }
     void Box(string name,float x,float y,float width,float height)
     {
@@ -149,6 +153,27 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
         if(cardBack!=null) cardBack.gameObject.SetActive(back);
         if(artwork!=null) artwork.gameObject.SetActive(!back);
         var stars=Find<RectTransform>("Stars"); if(stars!=null) stars.gameObject.SetActive(!back);
+        if(slotBonusLabel!=null)slotBonusLabel.gameObject.SetActive(!compactView && Card.Data.HasSlotBonus);
+    }
+    void RefreshSlotBonus()
+    {
+        if(slotBonusLabel==null && Card.Data.HasSlotBonus && !compactView)
+        {
+            var go=new GameObject("SlotBonusLabel",typeof(RectTransform),typeof(Text),typeof(Shadow));
+            go.transform.SetParent(transform,false); slotBonusLabel=go.GetComponent<Text>();
+            GameTypography.Apply(slotBonusLabel,ui.Assets,true);
+            slotBonusLabel.alignment=TextAnchor.MiddleLeft; slotBonusLabel.raycastTarget=false;
+            slotBonusLabel.resizeTextForBestFit=true; slotBonusLabel.resizeTextMinSize=14; slotBonusLabel.resizeTextMaxSize=18;
+            go.GetComponent<Shadow>().effectColor=new Color(.04f,.02f,.06f,.9f);
+            go.GetComponent<Shadow>().effectDistance=new Vector2(1,-1);
+        }
+        if(slotBonusLabel==null)return;
+        bool active=Card.Data.IsSlotBonusActive(Slot) && !sealedCard && ui.Manager.Run!=null && Slot!=ui.Manager.Run.State.SealedSlot && !ui.Manager.Run.IsCardSealed(Card.Uid);
+        double bonus=active?ui.Manager.Run.SlotScale(Card.Data,Slot)-1:Card.Data.SlotBonus-1;
+        slotBonusLabel.text=Card.Data.BonusSlot+"번 칸"+(active?"  +"+(bonus*100).ToString("0")+"%":" 보너스");
+        slotBonusLabel.color=active?new Color(.65f,1,.65f):new Color(.95f,.9f,.78f);
+        Box("SlotBonusLabel",compactView?16:22,compactView?-14:-144,compactView?88:244,24);
+        slotBonusLabel.gameObject.SetActive(Card.Data.HasSlotBonus && !compactView);
     }
     public void SetBackFace(bool value,bool animate=false)
     {
@@ -163,10 +188,12 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
             showingBack=flipTarget=value; flipChanged=true; flipStarted=-10; RefreshFace();
         }
     }
-    public void SetSealed(bool value)
+    public void SetSealed(bool value,string reason="이번 턴 봉인")
     {
-        sealedCard=value; group.alpha=value?.58f:1;
-        stateText.text=value?"이번 턴 봉인":""; stateBackground.gameObject.SetActive(value);
+        sealedCard=value; sealedReason=reason; group.alpha=value?.58f:1;
+        stateText.text=value?sealedReason:""; stateBackground.gameObject.SetActive(value);
+        RefreshSlotBonus();
+        if(value)stateBackground.transform.SetAsLastSibling();
     }
     public void SetMergePreview(int stars)
     {
@@ -177,7 +204,7 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
         var starHolder=Find<RectTransform>("Stars"); if(starHolder!=null) starHolder.gameObject.SetActive(active || !(compactView && showingBack));
         artwork.color=active?new Color(.12f,.08f,.16f):Color.white;
         for(int i=1;i<=4;i++) { var star=Find<Image>("Star"+i); if(star!=null) star.gameObject.SetActive(i<=(active?stars:Card.Stars)); }
-        stateText.text=active?"합성 → "+stars+"성":sealedCard?"이번 턴 봉인":"";
+        stateText.text=active?"합성 → "+stars+"성":sealedCard?sealedReason:"";
         stateBackground.gameObject.SetActive(active || sealedCard);
         if(active) stateBackground.transform.SetAsLastSibling();
     }

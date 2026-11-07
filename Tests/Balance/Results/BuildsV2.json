@@ -1,0 +1,146 @@
+[
+  {
+    "Build": "FocusBurst",
+    "Stars": 1,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 1500944,
+    "Damage": 10995454,
+    "RawComboDamage": 4191786
+  },
+  {
+    "Build": "FocusBurst",
+    "Stars": 2,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 19742218,
+    "Damage": 83346190,
+    "RawComboDamage": 19742218
+  },
+  {
+    "Build": "FocusBurst",
+    "Stars": 3,
+    "Clear": true,
+    "Turns": 5,
+    "PeakTurn": 69045212,
+    "Damage": 240827376,
+    "RawComboDamage": 100251640
+  },
+  {
+    "Build": "FocusBurst",
+    "Stars": 4,
+    "Clear": true,
+    "Turns": 2,
+    "PeakTurn": 154517028,
+    "Damage": 257335086,
+    "RawComboDamage": 432647676
+  },
+  {
+    "Build": "MultiHit",
+    "Stars": 1,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 418119,
+    "Damage": 3637638,
+    "RawComboDamage": 700524
+  },
+  {
+    "Build": "MultiHit",
+    "Stars": 2,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 1752372,
+    "Damage": 15245640,
+    "RawComboDamage": 3149064
+  },
+  {
+    "Build": "MultiHit",
+    "Stars": 3,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 7845618,
+    "Damage": 68256900,
+    "RawComboDamage": 15424188
+  },
+  {
+    "Build": "MultiHit",
+    "Stars": 4,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 30106071,
+    "Damage": 241406064,
+    "RawComboDamage": 60170499
+  },
+  {
+    "Build": "Tempo",
+    "Stars": 1,
+    "Clear": false,
+    "Turns": 12,
+    "PeakTurn": 1364922,
+    "Damage": 9218236,
+    "RawComboDamage": 689440
+  },
+  {
+    "Build": "Tempo",
+    "Stars": 2,
+    "Clear": false,
+    "Turns": 12,
+    "PeakTurn": 5107672,
+    "Damage": 39389764,
+    "RawComboDamage": 2293940
+  },
+  {
+    "Build": "Tempo",
+    "Stars": 3,
+    "Clear": false,
+    "Turns": 12,
+    "PeakTurn": 16095440,
+    "Damage": 130326728,
+    "RawComboDamage": 6321038
+  },
+  {
+    "Build": "Tempo",
+    "Stars": 4,
+    "Clear": true,
+    "Turns": 7,
+    "PeakTurn": 49760888,
+    "Damage": 254200366,
+    "RawComboDamage": 17168560
+  },
+  {
+    "Build": "Unsynergized",
+    "Stars": 1,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 2517,
+    "Damage": 17213,
+    "RawComboDamage": 2517
+  },
+  {
+    "Build": "Unsynergized",
+    "Stars": 2,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 4828,
+    "Damage": 34612,
+    "RawComboDamage": 4828
+  },
+  {
+    "Build": "Unsynergized",
+    "Stars": 3,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 8160,
+    "Damage": 61028,
+    "RawComboDamage": 8160
+  },
+  {
+    "Build": "Unsynergized",
+    "Stars": 4,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 13740,
+    "Damage": 106287,
+    "RawComboDamage": 13740
+  }
+]

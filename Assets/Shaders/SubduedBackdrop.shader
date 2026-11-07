@@ -4,9 +4,9 @@ Shader "Zanshin/SubduedBackdrop"
     {
         [PerRendererData] _MainTex ("Sprite",2D)="white" {}
         _Color ("Tint",Color)=(1,1,1,1)
-        _Saturation ("Saturation",Range(0,1))=.45
-        _Brightness ("Brightness",Range(0,1))=.7
-        _Contrast ("Contrast",Range(0,1))=.8
+        _Saturation ("Saturation",Range(0,1))=1
+        _Brightness ("Brightness",Range(0,1))=.9
+        _Contrast ("Contrast",Range(0,1))=1
         [HideInInspector] _RendererColor ("Renderer Color",Color)=(1,1,1,1)
     }
     SubShader
@@ -43,7 +43,6 @@ Shader "Zanshin/SubduedBackdrop"
                 half luminance=dot(color.rgb,half3(.2126,.7152,.0722));
                 color.rgb=lerp(luminance.xxx,color.rgb,_Saturation);
                 color.rgb=saturate((color.rgb-.5)*_Contrast+.5)*_Brightness;
-                color.rgb*=half3(.95,.97,1);
                 return color;
             }
             ENDHLSL

@@ -79,10 +79,10 @@ public class GameManager : MonoSingleton<GameManager>
         for(int i=0;i<6;i++)
         {
             if(i==Run.State.SealedSlot) continue;
-            var card=Run.State.Find(sequence[i]); if(card==null) continue;
-            UI.Highlight(i); Audio.Play(card.Data.IsAttack?GameSound.Slash:GameSound.Focus);
+            var card=Run.State.Find(sequence[i]); if(card==null || Run.IsCardSealed(card.Uid)) continue;
+            UI.Highlight(i); Audio.Play(card.Data.Effect==CardEffect.Ultimate?GameSound.Ultimate:card.Data.IsAttack?GameSound.Slash:GameSound.Focus);
             yield return new WaitForSeconds(.22f/Speed);
-            var result=Run.Resolve(card,turn);
+            var result=Run.Resolve(card,turn,i);
             yield return CurrentStage.Animate(result,Speed);
             UI.RefreshBattle();
             yield return new WaitForSeconds(.15f/Speed);
@@ -142,7 +142,7 @@ public class GameManager : MonoSingleton<GameManager>
     {
         if(Busy || InMenu || Run==null) return;
         if(Run.Ultimate()) { Audio.Play(GameSound.Reward); UI.Toast("대거합 획득! 이번 턴 안에 시퀀스에 넣어 사용하세요."); Commit(); }
-        else UI.Toast("궁극기 게이지가 100 필요합니다.");
+        else UI.Toast(Run.State.Ultimate>=100?"궁극기 카드가 이미 있거나 가방·장착 칸이 가득 찼습니다.":"궁극기 게이지가 100 필요합니다.");
     }
     public void Equip(int uid,int slot)
     {
@@ -153,17 +153,19 @@ public class GameManager : MonoSingleton<GameManager>
     public void Unequip(int slot)
     {
         if(Busy || InMenu || Run==null || UI.ModalOpen) return;
-        Run.Unequip(slot); Commit();
+        if(!Run.Unequip(slot)) { UI.Toast("가방이 가득 찼습니다. 먼저 판매하거나 합성하세요."); return; }
+        Commit();
     }
     public void PlaceInBag(int uid,int slot)
     {
         if(Busy || InMenu || Run==null || UI.ModalOpen) return;
         if(Run.PlaceInBag(uid,slot)) { Audio.Play(GameSound.Click); Commit(); }
+        else UI.Toast("가방이 가득 찼습니다. 먼저 판매하거나 합성하세요.");
     }
     public void AddDebugCard(int definition,int stars)
     {
         if(Busy || InMenu || Run==null || definition<0 || definition>=CardCatalog.All.Length) return;
-        if(Run.State.Cards.Count>=16) { UI.Toast("가방이 가득 찼습니다. 카드를 판매하거나 합성하세요."); return; }
+        if(Run.BagCount>=RunEngine.BagCapacity) { UI.Toast("가방이 가득 찼습니다. 카드를 판매하거나 합성하세요."); return; }
         var card=Run.AddCard(definition,Mathf.Clamp(stars,1,4));
         Commit(); UI.Toast(card.Data.Name+" 추가");
     }

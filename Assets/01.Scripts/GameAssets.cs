@@ -18,4 +18,13 @@ public class GameAssets : ScriptableObject
     public Sprite SelectionCorners;
     public Sprite PlayerArt;
     public Sprite[] EnemyArt;
+    public float PlayerHeight;
+    public float[] EnemyHeights;
+    public Sprite[] BossArt;
+    public float[] BossHeights;
+    public float UnitHeight(int kind,int floor,bool boss)
+    {
+        if(boss && BossHeights!=null && floor>0 && floor<=BossHeights.Length)return BossHeights[floor-1];
+        return EnemyHeights!=null && kind>=0 && kind<EnemyHeights.Length?EnemyHeights[kind]:1.2f;
+    }
 }

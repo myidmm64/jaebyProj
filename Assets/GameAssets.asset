@@ -38,6 +38,21 @@ MonoBehaviour:
   - {fileID: 21300004, guid: c81e773ad0524ca791615c5c00000013, type: 3}
   - {fileID: 21300005, guid: c81e773ad0524ca791615c5c00000013, type: 3}
   - {fileID: 21300006, guid: c81e773ad0524ca791615c5c00000013, type: 3}
+  - {fileID: 21300000, guid: 25eba6013c5c402384de4258dd654a8f, type: 3}
+  - {fileID: 21300000, guid: b9b321df31534a81b23d4d2c6e88928c, type: 3}
+  - {fileID: 21300000, guid: 0ad53c7bcb0547eda281832d4e7b3879, type: 3}
+  - {fileID: 21300000, guid: 0b924e6bbf804422aaf57e2669814651, type: 3}
+  - {fileID: 21300000, guid: 218fdf4a6fff424bbe63affb01c2b22e, type: 3}
+  - {fileID: 21300000, guid: 0c893ed0ac584d08b11ea7b5ec18aa20, type: 3}
+  - {fileID: 21300000, guid: 7848539971b44e62ac1e9e7eb3d01980, type: 3}
+  - {fileID: 21300000, guid: 5e7c6caeac694094a2e472041c6685dd, type: 3}
+  - {fileID: 21300000, guid: cf9384752a1342698094d64b78ab6cd3, type: 3}
+  - {fileID: 21300000, guid: 8063ddfd09884505b5cb9ef30a4e8442, type: 3}
+  - {fileID: 21300000, guid: 4ef9fd05477c4048b19094c2e6530a67, type: 3}
+  - {fileID: 21300000, guid: 1a78a2727e2a44ec9f655ad1a5491d34, type: 3}
+  - {fileID: 21300000, guid: 01effa9295ea4bebb0e20222b4209c08, type: 3}
+  - {fileID: 21300000, guid: 364998ede74748fb8b9fbc5b7fb59ce9, type: 3}
+  - {fileID: 21300000, guid: 383de1cf139147d1b3bd9029bc1d3e61, type: 3}
   CardArt:
   - {fileID: 21300001, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
   - {fileID: 21300002, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
@@ -89,3 +104,39 @@ MonoBehaviour:
   - {fileID: 2100000, guid: c936d15d72a64ec88de3214cd1669984, type: 2}
   - {fileID: 2100000, guid: bf1d7a4d79084449ac2633e1eff2385c, type: 2}
   SelectionCorners: {fileID: 21300000, guid: c8800bcadb674906acd84b064a2ad112, type: 3}
+  PlayerArt: {fileID: 21300000, guid: 10b5fbbfb9e843aaa8c6ae1962d12d65, type: 3}
+  PlayerHeight: 2.3125
+  EnemyArt:
+  - {fileID: 21300000, guid: d3d7fec9ca1747faadd7b4b7e31ab9d6, type: 3}
+  - {fileID: 21300000, guid: f1b51237c2b34a1f9552271f6d22d677, type: 3}
+  - {fileID: 21300000, guid: 63b78c0d30674306b0f101dd6127c2a9, type: 3}
+  - {fileID: 21300000, guid: df8f119fa9dd4aa5955bd54ee58975ce, type: 3}
+  - {fileID: 21300000, guid: 6713dc28df484228aa6b900246f33806, type: 3}
+  - {fileID: 21300000, guid: 04579c24568d4c7aa6c7db105581b940, type: 3}
+  - {fileID: 21300000, guid: 54a2468a04b44eac88b70bf55c16120d, type: 3}
+  - {fileID: 21300000, guid: 664873c784b44f83a1ffff24be7c762b, type: 3}
+  - {fileID: 21300000, guid: 3ef7d70d86a146399e4d450e2b60591c, type: 3}
+  - {fileID: 21300000, guid: fe7bd7aec5d645ef911c5c21b41f0033, type: 3}
+  - {fileID: 21300000, guid: 8624b93add214d7fa101f037eb6bbabd, type: 3}
+  - {fileID: 21300000, guid: d0b3e58206a0498e9b7d98d924bd3e85, type: 3}
+  EnemyHeights:
+  - 0.84375
+  - 1.03125
+  - 1.09375
+  - 1.125
+  - 1.3125
+  - 1.03125
+  - 1.21875
+  - 1.09375
+  - 1.5
+  - 1.21875
+  - 1.0625
+  - 1.25
+  BossArt:
+  - {fileID: 21300000, guid: 939192be76fd44d591bf89bcc49cced4, type: 3}
+  - {fileID: 21300000, guid: 48934da467b14eff971c671177d764b8, type: 3}
+  - {fileID: 21300000, guid: 498ac3cd62af4350ba5287774c2dba33, type: 3}
+  BossHeights:
+  - 2.1875
+  - 2.34375
+  - 2.3125

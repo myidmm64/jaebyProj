@@ -15,7 +15,7 @@ public class GameUI : MonoBehaviour
     public bool ModalOpen => overlay!=null;
     public bool InventoryOpen => overlayKind=="Inventory";
     static readonly Color Ink=GameTypography.Ink, Cream=GameTypography.Paper, Mint=new Color(.68f,.82f,.68f);
-    RectTransform bag, sequence, panel, header, info, items, nodes, rightHud, playerBuffs;
+    RectTransform bag, sequence, panel, header, info, items, itemContent, nodes, rightHud, playerBuffs;
     RectTransform[] slots=new RectTransform[6];
     const int BagColumns=7;
     const float BagHeaderHeight=52, BattlePanelHeight=628;
@@ -81,6 +81,7 @@ public class GameUI : MonoBehaviour
         Hook("PreviousPageButton",()=>Page(-1)); Hook("NextPageButton",()=>Page(1));
         Hook("SettingsButton",TogglePause);
         PreparePanels();
+        PrepareItemStrip();
         rightHud=Rect(CanvasTransform,"RightHud",0,0,352,242);
         rightHud.anchorMin=rightHud.anchorMax=rightHud.pivot=new Vector2(1,1); rightHud.anchoredPosition=new Vector2(-24,-20);
         LayoutRightHud();
@@ -173,6 +174,14 @@ public class GameUI : MonoBehaviour
         var enter=new EventTrigger.Entry{eventID=EventTriggerType.PointerEnter};
         enter.callback.AddListener(_=>ShowTooltip(anchor,title(),description())); trigger.triggers.Add(enter);
         var exit=new EventTrigger.Entry{eventID=EventTriggerType.PointerExit}; exit.callback.AddListener(_=>HideBuffTooltip()); trigger.triggers.Add(exit);
+        var scroll=anchor.GetComponentInParent<ScrollRect>();
+        if(scroll!=null)
+        {
+            var wheel=new EventTrigger.Entry{eventID=EventTriggerType.Scroll}; wheel.callback.AddListener(e=>scroll.OnScroll((PointerEventData)e)); trigger.triggers.Add(wheel);
+            var begin=new EventTrigger.Entry{eventID=EventTriggerType.BeginDrag}; begin.callback.AddListener(e=>{HideBuffTooltip();scroll.OnBeginDrag((PointerEventData)e);}); trigger.triggers.Add(begin);
+            var drag=new EventTrigger.Entry{eventID=EventTriggerType.Drag}; drag.callback.AddListener(e=>scroll.OnDrag((PointerEventData)e)); trigger.triggers.Add(drag);
+            var end=new EventTrigger.Entry{eventID=EventTriggerType.EndDrag}; end.callback.AddListener(e=>scroll.OnEndDrag((PointerEventData)e)); trigger.triggers.Add(end);
+        }
     }
     void ShowTooltip(Transform anchor,string title,string description)
     {
@@ -216,6 +225,26 @@ public class GameUI : MonoBehaviour
         track.anchoredPosition=new Vector2(24,-66); track.sizeDelta=new Vector2(288,22);
         fill.rectTransform.anchorMin=Vector2.zero; fill.rectTransform.anchorMax=Vector2.one; fill.rectTransform.offsetMin=new Vector2(6,5); fill.rectTransform.offsetMax=new Vector2(-6,-5);
     }
+    void PrepareItemStrip()
+    {
+        foreach(Transform child in items)child.gameObject.SetActive(false);
+        var oldLayout=items.GetComponent<HorizontalLayoutGroup>(); if(oldLayout!=null)oldLayout.enabled=false;
+        var oldFitter=items.GetComponent<ContentSizeFitter>(); if(oldFitter!=null)oldFitter.enabled=false;
+        items.anchorMin=items.anchorMax=items.pivot=new Vector2(0,1);
+        items.anchoredPosition=new Vector2(24,-20); items.sizeDelta=new Vector2(440,72);
+        if(items.GetComponent<RectMask2D>()==null)items.gameObject.AddComponent<RectMask2D>();
+        itemContent=Rect(items,"ItemContent",0,0,0,72);
+        itemContent.anchorMin=new Vector2(0,0); itemContent.anchorMax=new Vector2(0,1); itemContent.pivot=new Vector2(0,.5f);
+        itemContent.anchoredPosition=Vector2.zero; itemContent.sizeDelta=Vector2.zero;
+        var layout=itemContent.gameObject.AddComponent<HorizontalLayoutGroup>(); layout.spacing=8;
+        layout.childAlignment=TextAnchor.MiddleLeft; layout.childControlWidth=true; layout.childControlHeight=true;
+        layout.childForceExpandWidth=false; layout.childForceExpandHeight=false;
+        var fitter=itemContent.gameObject.AddComponent<ContentSizeFitter>(); fitter.horizontalFit=ContentSizeFitter.FitMode.PreferredSize;
+        var scroll=items.GetComponent<ScrollRect>(); if(scroll==null)scroll=items.gameObject.AddComponent<ScrollRect>();
+        scroll.content=itemContent; scroll.viewport=items; scroll.horizontal=true; scroll.vertical=false;
+        scroll.movementType=ScrollRect.MovementType.Clamped; scroll.scrollSensitivity=35;
+    }
+    Sprite ItemArt(int id) => Assets.ItemIcons!=null && id>=0 && id<Assets.ItemIcons.Length?Assets.ItemIcons[id]:Assets.Buff;
     void Hook(string name,Action action)
     {
         var b=C<Button>(name); if(b==null) return;
@@ -224,6 +253,9 @@ public class GameUI : MonoBehaviour
     }
     public Sprite Art(CardDefinition d)
     {
+        if(d.Id==31)return Assets.Gold;
+        if(d.Id==32)return Assets.Slash;
+        if(d.Id==33)return Assets.Star;
         if(Assets.CardArt!=null && d.Id<Assets.CardArt.Length && Assets.CardArt[d.Id]!=null) return Assets.CardArt[d.Id];
         return d.Art==0?Assets.Slash:Assets.ItemIcons[d.Art%6];
     }
@@ -237,7 +269,7 @@ public class GameUI : MonoBehaviour
         speedText.text="×"+Manager.Speed.ToString("0");
         Put("GoldText",s.Gold.ToString());
         Put("FloorTurnText",s.Floor+"층 · "+s.Turn+"턴");
-        Put("ExecuteText",Manager.Busy?"진행 중":"실행");
+        Put("ExecuteText",Manager.Busy?"진행 중":Manager.Run.HasExecutableCard?"실행":"대기");
         execute.interactable=!Manager.Busy && s.Phase==RunPhase.Battle;
         ultimate.interactable=!Manager.Busy && s.Phase==RunPhase.Battle && s.Ultimate>=100;
         Put("UltimateText","궁극기  "+s.Ultimate+"/100  [U]");
@@ -251,7 +283,7 @@ public class GameUI : MonoBehaviour
     }
     List<OwnedCard> Ordered() => Manager.Run.BagCards;
     int BagPageCount => Math.Max(1,(Ordered().Count+BagColumns-1)/BagColumns);
-    void RefreshBagCount() { Put("BagCount",Manager.Run.State.Cards.Count+"/16",header); }
+    void RefreshBagCount() { Put("BagCount",Manager.Run.BagCount+"/"+RunEngine.BagCapacity,header); }
     void RefreshCards()
     {
         var s=Manager.Run.State; var ordered=Ordered();
@@ -289,7 +321,8 @@ public class GameUI : MonoBehaviour
         if(view.transform.parent!=parent) view.transform.SetParent(parent,false);
         view.transform.SetAsLastSibling();
         view.gameObject.SetActive(true); view.Bind(card,this,slot,compact); view.SetSelected(card.Uid==selected);
-        view.SetSealed(slot>=0 && slot==Manager.Run.State.SealedSlot);
+        bool cardSealed=Manager.Run.IsCardSealed(card.Uid);
+        view.SetSealed(cardSealed || (slot>=0 && slot==Manager.Run.State.SealedSlot),cardSealed?"카드 봉인":"칸 봉인");
         if(compact && slot==-1) view.SetBackFace(flippedBagCards.Contains(card.Uid));
         return view;
     }
@@ -318,25 +351,37 @@ public class GameUI : MonoBehaviour
             var rt=b.GetComponent<RectTransform>(); rt.anchorMin=rt.anchorMax=rt.pivot=new Vector2(.5f,.5f); rt.anchoredPosition=local;
             targetButtons.Add(b.gameObject);
             var state=s.Enemies[i];
-            var sprite=state.Intent==EnemyIntent.Guard?Assets.Buff:state.Intent==EnemyIntent.DisruptFocus?Assets.Focus:state.Intent==EnemyIntent.Seal?Art(CardCatalog.All[7]):
-                state.Intent==EnemyIntent.SiphonUltimate?Assets.ItemIcons[5]:state.Intent==EnemyIntent.Pressure?Assets.ItemIcons[4]:state.Intent==EnemyIntent.Regenerate?Assets.ItemIcons[2]:Assets.Slash;
+            var sprite=state.Intent==EnemyIntent.Guard || state.Intent==EnemyIntent.Fortify?Assets.Buff:state.Intent==EnemyIntent.DisruptFocus?Assets.Focus:state.Intent==EnemyIntent.CardSeal?ItemArt(0):state.Intent==EnemyIntent.Seal?Art(CardCatalog.All[7]):
+                state.Intent==EnemyIntent.SiphonUltimate?ItemArt(5):state.Intent==EnemyIntent.Pressure?ItemArt(4):state.Intent==EnemyIntent.Regenerate || state.Intent==EnemyIntent.MendAllies?ItemArt(2):state.Intent==EnemyIntent.Suppress?ItemArt(ItemCatalog.Incense):Assets.Slash;
             var intent=Picture(CanvasTransform,"EnemyIntent"+i,0,0,44,44,sprite); intent.preserveAspect=true;
             var iconRect=intent.rectTransform; iconRect.anchorMin=iconRect.anchorMax=iconRect.pivot=new Vector2(.5f,.5f);
             RectTransformUtility.ScreenPointToLocalPointInRectangle(CanvasTransform,Camera.main.WorldToScreenPoint(Manager.CurrentStage.BuffPosition(i)),null,out var buffPoint);
             iconRect.anchoredPosition=buffPoint;
             enemyIntentIcons.Add(i,iconRect);
             AttachTooltip(iconRect,()=>"다음 행동 · "+RunEngine.IntentName(s.Enemies[index]),()=>
-                (s.Enemies[index].Guarding?"현재 경화: 받는 피해 -40%\n":"")+RunEngine.IntentDescription(s.Enemies[index]));
+                (s.Enemies[index].Rear?"후열: 앞줄 경화 시 단일 피해 -20%.\n":"")+
+                (s.Enemies[index].Guarding?"현재 경화: 받는 피해 -50%\n":"")+RunEngine.IntentDescription(s.Enemies[index]));
             if(state.Guarding) intent.color=new Color(.56f,.86f,1);
             targetButtons.Add(intent.gameObject);
+            if(state.Barrier>0)EnemyStatusIcon(i,buffPoint+new Vector2(42,0),Assets.Buff,"보호막",()=>"남은 보호막 "+GameMath.Number(s.Enemies[index].Barrier)+"\n체력보다 먼저 피해를 흡수합니다. 균열 망치로 빠르게 파괴할 수 있습니다.");
+            if(state.Enraged)EnemyStatusIcon(i,buffPoint+new Vector2(-42,0),ItemArt(ItemCatalog.WarHorn),"광폭화",()=>"보스가 4턴에 진입하거나 체력이 절반 이하가 되면 활성화됩니다. 공격 약화는 35%, 궁극기 흡수는 25로 강화됩니다.");
         }
+    }
+    void EnemyStatusIcon(int index,Vector2 position,Sprite sprite,string title,Func<string> description)
+    {
+        var parent=enemyIntentIcons[index];
+        var icon=Picture(parent,title+index,0,0,32,32,sprite); icon.preserveAspect=true;
+        var rect=icon.rectTransform; rect.anchorMin=rect.anchorMax=rect.pivot=new Vector2(.5f,.5f); rect.anchoredPosition=position-parent.anchoredPosition;
+        AttachTooltip(rect,()=>title,description);
     }
     public string InterferenceText()
     {
         if(Manager.Run==null) return "";
         var s=Manager.Run.State; var effects=new List<string>();
-        if(s.Weakened) effects.Add("피해 -25%"); if(s.FocusDisrupted) effects.Add("집중 획득 -50%");
+        if(s.Weakened) effects.Add("피해 -"+(Manager.Run.WeakenAmount*100).ToString("0")+"%"); if(s.FocusDisrupted) effects.Add("집중 획득 -50%");
+        if(s.SupportSuppressed)effects.Add("지원 효과 -25%");
         if(s.SealedSlot>=0) effects.Add((s.SealedSlot+1)+"번 칸 봉인");
+        var sealedCard=s.Find(s.SealedCardUid); if(sealedCard!=null)effects.Add(sealedCard.Data.Name+" 카드 봉인");
         if(s.LostTurns>0)effects.Add("기한 -"+s.LostTurns+"턴");
         return effects.Count==0?"방해 효과 없음":"이번 턴 · "+string.Join(" / ",effects);
     }
@@ -357,13 +402,14 @@ public class GameUI : MonoBehaviour
     }
     void RefreshItems()
     {
-        foreach(Transform t in items) { t.gameObject.SetActive(false); Destroy(t.gameObject); }
+        foreach(Transform t in itemContent) { t.gameObject.SetActive(false); Destroy(t.gameObject); }
         var s=Manager.Run.State;
-        for(int i=0;i<6;i++) if(s.Items[i]>0)
+        for(int i=0;i<ItemCatalog.Count;i++) if(s.Items[i]>0)
         {
             int id=i;
-            var b=MakeButton(items,"Item"+i,0,0,62,72,"",()=>ShowMessage(ItemCatalog.Names[id],ItemCatalog.Descriptions[id]+"\n\n보유 "+s.Items[id]+"개"),20);
-            b.GetComponent<Image>().sprite=Assets.ItemIcons[i]; b.GetComponent<Image>().type=Image.Type.Simple; b.GetComponent<Image>().preserveAspect=true;
+            var b=MakeButton(itemContent,"Item"+i,0,0,50,62,"",()=>ShowMessage(ItemCatalog.Names[id],ItemCatalog.Descriptions[id]+"\n\n보유 "+s.Items[id]+"개"),20);
+            var layout=b.gameObject.AddComponent<LayoutElement>(); layout.preferredWidth=50; layout.preferredHeight=62;
+            b.GetComponent<Image>().sprite=ItemArt(i); b.GetComponent<Image>().type=Image.Type.Simple; b.GetComponent<Image>().preserveAspect=true;
             AttachTooltip(b.transform,()=>ItemCatalog.Names[id],()=>ItemCatalog.Descriptions[id]+"\n보유 "+s.Items[id]+"개");
             var label=b.GetComponentInChildren<Text>(); label.text=s.Items[i]>1?s.Items[i].ToString():""; label.alignment=TextAnchor.LowerRight; label.color=Cream; Outline(label);
         }
@@ -538,7 +584,7 @@ public class GameUI : MonoBehaviour
         if(lastCanvas!=CanvasTransform.rect.size) { Layout(); if(Manager.Run!=null) RefreshBattle(); }
         if(execute!=null && Manager.Run!=null)
         {
-            float pulse=!Manager.InMenu && !Manager.Busy && Manager.Run.CanExecute?1+.012f*Mathf.Sin(Time.unscaledTime*4):1;
+            float pulse=!Manager.InMenu && !Manager.Busy && Manager.Run.HasExecutableCard && Manager.Run.CanExecute?1+.012f*Mathf.Sin(Time.unscaledTime*4):1;
             execute.transform.localScale=Vector3.one*pulse;
             ultimate.transform.localScale=Vector3.one*(Manager.Run.State.Ultimate>=100?1+.015f*Mathf.Sin(Time.unscaledTime*5):1);
         }
@@ -662,7 +708,7 @@ public class GameUI : MonoBehaviour
             if(item)
             {
                 var p=Picture(w,"ItemChoice"+i,80+i*410,-175,380,420,Assets.EmptySlot); p.type=Image.Type.Sliced;
-                Picture(p.transform,"Art",126,-30,128,128,Assets.ItemIcons[id]);
+                Picture(p.transform,"Art",126,-30,128,128,ItemArt(id));
                 Label(p.transform,"ItemName",20,-180,340,50,ItemCatalog.Names[id],30,Cream);
                 Label(p.transform,"ItemDescription",30,-250,320,120,ItemCatalog.Descriptions[id],25,Cream);
                 MakeButton(w,"Pick"+i,100+i*410,-625,340,60,"가져가기",()=>Manager.ChooseItem(index),25);
@@ -678,7 +724,7 @@ public class GameUI : MonoBehaviour
         if(!item)
         {
             MakeButton(w,"Skip",870,-715,360,48,"카드 대신 골드 +"+Manager.Run.RewardGold,()=>Manager.ChooseCard(-1),23);
-            MakeButton(w,"Manage",100,-715,360,48,"가방 "+s.Cards.Count+"/16 · 합성 / 판매",ShowInventory,23);
+            MakeButton(w,"Manage",100,-715,360,48,"가방 "+Manager.Run.BagCount+"/16 · 합성 / 판매",ShowInventory,23);
         }
     }
     void ShowShop()
@@ -707,7 +753,7 @@ public class GameUI : MonoBehaviour
         var managedOrder=bagOrder.Concat(s.Cards.Where(c=>Array.IndexOf(s.Sequence,c.Uid)>=0)).ToList();
         if(!managedOrder.Any(c=>c.Uid==selected)) selected=managedOrder.Count>0?managedOrder[0].Uid:-1;
         var w=Overlay("Inventory",1500,900); inventoryCards.Clear();
-        Label(w,"Title",40,-25,1420,60,"가방 관리   "+s.Cards.Count+" / 16",36,Ink);
+        Label(w,"Title",40,-25,1420,60,"가방 관리   "+Manager.Run.BagCount+" / 16",36,Ink);
         var inventoryGold=Rect(w,"InventoryGold",1240,-32,200,44);
         var goldIcon=Picture(inventoryGold,"Icon",0,-4,36,36,Assets.Gold); goldIcon.preserveAspect=true;
         var goldValue=Label(inventoryGold,"Value",48,0,152,44,s.Gold.ToString(),30,Ink,TextAnchor.MiddleLeft);
@@ -719,13 +765,14 @@ public class GameUI : MonoBehaviour
             var card=c;
             var view=Instantiate(Assets.CardPrefab,w); view.gameObject.SetActive(true);
             view.Bind(card,this,-2,true,()=>{selected=card.Uid;ShowInventory();}); view.SetSelected(card.Uid==selected);
-            PlaceCard(view,w,72+(n%5)*180,-136-(n/5)*160,.68f); inventoryCards.Add(view);
+            view.SetSealed(Manager.Run.IsCardSealed(card.Uid),"카드 봉인");
+            PlaceCard(view,w,72+(n%5)*180,-132-(n/5)*132,.57f); inventoryCards.Add(view);
             if(Array.IndexOf(s.Sequence,card.Uid)>=0)
             {
                 var tag=Picture(view.transform,"EquippedTag",12,-150,200,30,null); tag.color=new Color(.08f,.06f,.11f,.92f);
                 Label(tag.transform,"Caption",4,-3,192,24,"시퀀스 장착",18,Cream);
             }
-            Label(w,"Name"+n,62+(n%5)*180,-270-(n/5)*160,174,24,card.Data.Name,18,Ink);
+            Label(w,"Name"+n,62+(n%5)*180,-246-(n/5)*132,174,22,card.Data.Name,18,Ink);
             n++;
         }
         var selectedCard=s.Find(selected);
@@ -775,9 +822,9 @@ public class GameUI : MonoBehaviour
         MakeButton(detail,"StarMinus",194,-340,56,46,"−",()=>{debugStars=Math.Max(1,debugStars-1);ShowDebugCards();},24);
         Label(detail,"StarValue",258,-340,118,46,debugStars+"성",24,Cream);
         MakeButton(detail,"StarPlus",388,-340,56,46,"+",()=>{debugStars=Math.Min(4,debugStars+1);ShowDebugCards();},24);
-        MakeButton(detail,"AddToBag",30,-510,430,58,"가방에 추가",()=>{Manager.AddDebugCard(debugDefinition,debugStars);Put("Capacity","가방 "+Manager.Run.State.Cards.Count+" / 16",w);},24);
+        MakeButton(detail,"AddToBag",30,-510,430,58,"가방에 추가",()=>{Manager.AddDebugCard(debugDefinition,debugStars);Put("Capacity","가방 "+Manager.Run.BagCount+" / 16",w);},24);
         MakeButton(w,"Back",1124,-810,360,60,"돌아가기",()=>{CloseOverlay();Refresh();},24);
-        Label(w,"Capacity",54,-814,820,52,"가방 "+Manager.Run.State.Cards.Count+" / 16",24,Ink,TextAnchor.MiddleLeft);
+        Label(w,"Capacity",54,-814,820,52,"가방 "+Manager.Run.BagCount+" / 16",24,Ink,TextAnchor.MiddleLeft);
     }
     void ShowEnding()
     {
