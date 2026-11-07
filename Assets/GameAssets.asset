@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e12c173ed1054e7185e367c6d831af77, type: 3}
+  m_Name: GameAssets
+  m_EditorClassIdentifier:
+  StonePrefab: {fileID: 3924224417952430528, guid: 6157aa6cc11e4ae3b8ab10b110002003, type: 3}
+  Font: {fileID: 12800000, guid: f245996fbc0647babc1f114400000001, type: 3}
+  CardPrefab: {fileID: 100029, guid: 6157aa6cc11e4ae3b8ab10b110002004, type: 3}
+  SlimePrefab: {fileID: 2805917401443574318, guid: 6157aa6cc11e4ae3b8ab10b110002002, type: 3}
+  Battle: {fileID: -6477369387466236984, guid: 6ec5ee17be7c68745833b6bcec559d1f, type: 3}
+  CardFrame: {fileID: 21300000, guid: 91f6835ef95e49b983df5d98e750f87e, type: 3}
+  Boss: {fileID: 1180465656564002840, guid: 8beb025e9b3387448be2a059fc7a9206, type: 3}
+  Gold: {fileID: -3988769855312385993, guid: 93de5f174640f7f478ef7c5d115997fa, type: 3}
+  Shop: {fileID: -4138424720422360625, guid: c076b2a1c0dd41544af2cfac91c30c20, type: 3}
+  Focus: {fileID: 21300000, guid: f245996fbc0647babc1f114400000005, type: 3}
+  Buff: {fileID: 1698000013310683331, guid: d325e178529ac19408b23f120d247156, type: 3}
+  Star: {fileID: 21300000, guid: a2073fed3df44074997cc1bf07195060, type: 3}
+  Execute: {fileID: 21300000, guid: e6f65c11ac1946c499ef180000000004, type: 3}
+  Slash: {fileID: 21300000, guid: c81e773ad0524ca791615c5c00000012, type: 3}
+  EmptySlot: {fileID: 21300000, guid: e6f65c11ac1946c499ef180000000003, type: 3}
+  BagFrame: {fileID: 21300000, guid: 456cb976c4c54b8897317da03285677a, type: 3}
+  Frame: {fileID: 21300000, guid: e6f65c11ac1946c499ef180000000001, type: 3}
+  Panel: {fileID: 21300000, guid: e6f65c11ac1946c499ef180000000002, type: 3}
+  CurrentNode: {fileID: -8106973610771022248, guid: 3b409f869e6a1eb4eb8f9a9c12ec2693, type: 3}
+  ItemIcons:
+  - {fileID: 21300001, guid: c81e773ad0524ca791615c5c00000013, type: 3}
+  - {fileID: 21300002, guid: c81e773ad0524ca791615c5c00000013, type: 3}
+  - {fileID: 21300003, guid: c81e773ad0524ca791615c5c00000013, type: 3}
+  - {fileID: 21300004, guid: c81e773ad0524ca791615c5c00000013, type: 3}
+  - {fileID: 21300005, guid: c81e773ad0524ca791615c5c00000013, type: 3}
+  - {fileID: 21300006, guid: c81e773ad0524ca791615c5c00000013, type: 3}
+  CardArt:
+  - {fileID: 21300001, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300002, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300003, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300004, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300005, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300006, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300007, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300008, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300009, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300010, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300011, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300012, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300013, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300014, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300015, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300016, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300017, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300018, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300019, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300020, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300021, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300022, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300023, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300024, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300025, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300026, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300027, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300028, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300029, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  - {fileID: 21300030, guid: b32c05bf90cb441bb7cdf769a4a50a01, type: 3}
+  CombatMaterial: {fileID: 2100000, guid: e6f65c11ac1946c499ef180100000002, type: 2}
+  HeadingFont: {fileID: 12800000, guid: f245996fbc0647babc1f114400000002, type: 3}
+  GroundShadow: {fileID: 21300000, guid: f245996fbc0647babc1f114400000004, type: 3}
+  HeaderTab: {fileID: 21300000, guid: f245996fbc0647babc1f114400000006, type: 3}
+  CardFrames:
+  - {fileID: 21300000, guid: 91f6835ef95e49b983df5d98e750f87e, type: 3}
+  - {fileID: 21300000, guid: 209558c7bb8e4bf19e17b905ecdb3c17, type: 3}
+  - {fileID: 21300000, guid: 9657721add4846e99a7485bc832c8698, type: 3}
+  - {fileID: 21300000, guid: 2996462f2e0b4d1c89ff2c7301eaaa3e, type: 3}
+  BagFrames:
+  - {fileID: 21300000, guid: 456cb976c4c54b8897317da03285677a, type: 3}
+  - {fileID: 21300000, guid: 13677b69fd694fffab9e7b9948546300, type: 3}
+  - {fileID: 21300000, guid: d04a24f2def44a1cb701b0fabe596351, type: 3}
+  - {fileID: 21300000, guid: b5f6feaa9c4842e1bda52378f54d3705, type: 3}
+  CardFrameMaterials:
+  - {fileID: 2100000, guid: 5563a7aae6d0456481b6c3ce056421fa, type: 2}
+  - {fileID: 2100000, guid: 8973d37a85624c62b9d6c4455366b9de, type: 2}
+  - {fileID: 2100000, guid: c936d15d72a64ec88de3214cd1669984, type: 2}
+  - {fileID: 2100000, guid: bf1d7a4d79084449ac2633e1eff2385c, type: 2}
+  SelectionCorners: {fileID: 21300000, guid: c8800bcadb674906acd84b064a2ad112, type: 3}

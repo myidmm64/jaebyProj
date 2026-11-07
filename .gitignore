@@ -11,6 +11,9 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+/Tests/**/bin/
+/Tests/**/obj/
+/Tests/Results/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 *.log
@@ -44,6 +47,7 @@
 ExportedObj/
 .consulo/
 *.csproj
+!/Tests/Balance/Balance.csproj
 *.unityproj
 *.sln
 *.slnx

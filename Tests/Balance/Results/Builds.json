@@ -1,0 +1,158 @@
+[
+  {
+    "Build": "FocusBurst",
+    "Stars": 1,
+    "Clear": false,
+    "Turns": 8,
+    "PeakTurn": 173880,
+    "Damage": 1057000,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "FocusBurst",
+    "Stars": 2,
+    "Clear": false,
+    "Turns": 8,
+    "PeakTurn": 8328456,
+    "Damage": 47287026,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "FocusBurst",
+    "Stars": 3,
+    "Clear": true,
+    "Turns": 3,
+    "PeakTurn": 65234424,
+    "Damage": 111160650,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "FocusBurst",
+    "Stars": 4,
+    "Clear": true,
+    "Turns": 1,
+    "PeakTurn": 160418484,
+    "Damage": 160418484,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "MultiHit",
+    "Stars": 1,
+    "Clear": false,
+    "Turns": 8,
+    "PeakTurn": 11664,
+    "Damage": 78160,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "MultiHit",
+    "Stars": 2,
+    "Clear": false,
+    "Turns": 8,
+    "PeakTurn": 108804,
+    "Damage": 677568,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "MultiHit",
+    "Stars": 3,
+    "Clear": false,
+    "Turns": 8,
+    "PeakTurn": 1218288,
+    "Damage": 7570944,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "MultiHit",
+    "Stars": 4,
+    "Clear": true,
+    "Turns": 6,
+    "PeakTurn": 22817140,
+    "Damage": 110377939,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "Survival",
+    "Stars": 1,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 86940,
+    "Damage": 848340,
+    "SurvivalActions": 12
+  },
+  {
+    "Build": "Survival",
+    "Stars": 2,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 756486,
+    "Damage": 6007716,
+    "SurvivalActions": 12
+  },
+  {
+    "Build": "Survival",
+    "Stars": 3,
+    "Clear": false,
+    "Turns": 10,
+    "PeakTurn": 4685688,
+    "Damage": 40943232,
+    "SurvivalActions": 12
+  },
+  {
+    "Build": "Survival",
+    "Stars": 4,
+    "Clear": true,
+    "Turns": 3,
+    "PeakTurn": 38462862,
+    "Damage": 110486076,
+    "SurvivalActions": 5
+  },
+  {
+    "Build": "Unsynergized",
+    "Stars": 1,
+    "Clear": false,
+    "Turns": 8,
+    "PeakTurn": 1235,
+    "Damage": 6422,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "Unsynergized",
+    "Stars": 2,
+    "Clear": false,
+    "Turns": 8,
+    "PeakTurn": 2936,
+    "Damage": 16013,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "Unsynergized",
+    "Stars": 3,
+    "Clear": false,
+    "Turns": 8,
+    "PeakTurn": 6895,
+    "Damage": 38986,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "Unsynergized",
+    "Stars": 4,
+    "Clear": false,
+    "Turns": 8,
+    "PeakTurn": 18188,
+    "Damage": 107756,
+    "SurvivalActions": 0
+  },
+  {
+    "Build": "ProtectionExample",
+    "Protection": false,
+    "SecondTurnDamage": 1880,
+    "TurnLimit": 8
+  },
+  {
+    "Build": "ProtectionExample",
+    "Protection": true,
+    "SecondTurnDamage": 3680,
+    "TurnLimit": 9
+  }
+]
