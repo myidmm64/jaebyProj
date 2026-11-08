@@ -11,5 +11,9 @@
     <Compile Include="../../Assets/01.Scripts/RunState.cs" Link="RunState.cs" />
     <Compile Include="../../Assets/01.Scripts/RunEngine.cs" Link="RunEngine.cs" />
     <Compile Include="../../Assets/01.Scripts/EnemyCatalog.cs" Link="EnemyCatalog.cs" />
+    <Compile Include="../../Assets/01.Scripts/GameLocalization.cs" Link="GameLocalization.cs" />
+    <Compile Include="../../Assets/01.Scripts/CatalogText.cs" Link="CatalogText.cs" />
+    <Compile Include="../../Assets/01.Scripts/UiTranslations.cs" Link="UiTranslations.cs" />
+    <Compile Include="../../Assets/01.Scripts/CardTranslations.cs" Link="CardTranslations.cs" />
   </ItemGroup>
 </Project>

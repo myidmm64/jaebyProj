@@ -272,7 +272,7 @@ public sealed class RunEngine
                     double chance=Chance(d,card.Stars), success=1+value/100;
                     bool won=!turn.Preview && ChanceSucceeds(card.Uid,31,chance);
                     turn.Multiplier*=turn.Preview?chance*success+(1-chance)*d.UnluckyScale:won?success:d.UnluckyScale;
-                    if(!turn.Preview) { result.ChanceSuccess=won; result.ChanceText=won?"승부 성공 ×"+success.ToString("0.##"):"승부 실패 ×"+d.UnluckyScale.ToString("0.##"); }
+                    if(!turn.Preview) { result.ChanceSuccess=won; result.ChanceText=won?CatalogText.Text("승부 성공 ×{0:0.##}","Won ×{0:0.##}",success):CatalogText.Text("승부 실패 ×{0:0.##}","Lost ×{0:0.##}",d.UnluckyScale); }
                 }
                 break;
             case CardEffect.ChanceEcho:
@@ -280,7 +280,7 @@ public sealed class RunEngine
                 double echoChance=Chance(d,card.Stars);
                 bool echoWon=!turn.Preview && ChanceSucceeds(card.Uid,33,echoChance);
                 if(turn.Preview || echoWon)SetEcho(turn,1,turn.Preview?echoChance:1,card.Stars);
-                if(!turn.Preview) { result.ChanceSuccess=echoWon; result.ChanceText=echoWon?"동전 성공 · 추가 공격":"동전 실패"; }
+                if(!turn.Preview) { result.ChanceSuccess=echoWon; result.ChanceText=echoWon?CatalogText.Text("동전 성공 · 추가 공격","Coin won · follow-up"):CatalogText.Text("동전 실패","Coin lost"); }
                 break;
             default:
                 double itemBonus=s.Items[1]*.18+(d.Iai?s.Items[3]*.18:0);
@@ -293,13 +293,13 @@ public sealed class RunEngine
                 {
                     double chance=Chance(d,card.Stars); bool lucky=!turn.Preview && ChanceSucceeds(card.Uid,32,chance);
                     mult*=turn.Preview?chance*d.LuckyScale+(1-chance)*d.UnluckyScale:lucky?d.LuckyScale:d.UnluckyScale;
-                    if(!turn.Preview) { result.ChanceSuccess=lucky; result.ChanceText=lucky?"강타 ×"+d.LuckyScale.ToString("0.##"):"약타 ×"+d.UnluckyScale.ToString("0.##"); }
+                    if(!turn.Preview) { result.ChanceSuccess=lucky; result.ChanceText=lucky?CatalogText.Text("강타 ×{0:0.##}","Strong hit ×{0:0.##}",d.LuckyScale):CatalogText.Text("약타 ×{0:0.##}","Weak hit ×{0:0.##}",d.UnluckyScale); }
                 }
                 if(turn.CriticalChance>0)
                 {
                     bool critical=!turn.Preview && ChanceSucceeds(card.Uid,19,turn.CriticalChance);
                     mult*=turn.Preview?1+turn.CriticalChance*(turn.CriticalScale-1):critical?turn.CriticalScale:1;
-                    if(critical) { result.ChanceSuccess=true; result.ChanceText=string.IsNullOrEmpty(result.ChanceText)?"행운 ×"+turn.CriticalScale.ToString("0.##"):result.ChanceText+" · 행운 ×"+turn.CriticalScale.ToString("0.##"); }
+                    if(critical) { result.ChanceSuccess=true; string luck=CatalogText.Text("행운 ×{0:0.##}","Lucky ×{0:0.##}",turn.CriticalScale); result.ChanceText=string.IsNullOrEmpty(result.ChanceText)?luck:result.ChanceText+" · "+luck; }
                 }
                 long damage=GameMath.Damage((value+turn.Flat*d.ForgeScale(card.Stars)+s.Items[ItemCatalog.Whetstone]*40*s.Floor+s.Focus*d.Ratio(card.Stars))*mult*slotScale);
                 var targets=TargetsFor(d);
@@ -567,7 +567,7 @@ public sealed class RunEngine
         if(IsBoss)
         {
             int kind=new[]{0,5,9,11}[s.Floor]; long hp=EnemyHealth(s,kind,true);
-            s.Enemies.Add(new EnemyState { Name=new[]{"","초원의 심장","균열의 파수꾼","공허의 학장"}[s.Floor],Kind=kind,Health=hp,MaxHealth=hp,Boss=true });
+            s.Enemies.Add(new EnemyState { Name=CatalogText.Name(new[]{"","초원의 심장","균열의 파수꾼","공허의 학장"}[s.Floor]),Kind=kind,Health=hp,MaxHealth=hp,Boss=true });
             int[] helpers=s.Floor==1?new[]{3}:s.Floor==2?new[]{5,8}:new[]{6,9};
             foreach(int helper in helpers)
             {
@@ -609,7 +609,7 @@ public sealed class RunEngine
         var cards=State.Sequence.Select(uid=>State.Find(uid)).Where(c=>c!=null).Concat(State.Cards)
             .Where(c=>!c.Temporary && !IsCardSealed(c.Uid)).GroupBy(c=>c.Uid).Select(g=>g.First()).ToArray();
         var target=cards.Length>0?cards[(State.Turn+index)%cards.Length]:null;
-        enemy.IntentCardUid=target?.Uid??0; enemy.IntentCardName=target?.Data.Name??"카드 1장";
+        enemy.IntentCardUid=target?.Uid??0; enemy.IntentCardName=target?.Data.Name??CatalogText.Name("카드 1장");
     }
     void RefreshCardSealTargets()
     {
@@ -623,36 +623,36 @@ public sealed class RunEngine
     {
         switch(enemy.Intent)
         {
-            case EnemyIntent.Weaken: return "공격 약화";
-            case EnemyIntent.Guard: return "경화";
-            case EnemyIntent.Fortify: return "진형 보호막";
-            case EnemyIntent.MendAllies: return "아군 회복";
-            case EnemyIntent.Suppress: return "지원 억제";
-            case EnemyIntent.Seal: return (enemy.IntentSlot+1)+"번 칸 봉인";
-            case EnemyIntent.CardSeal: return "카드 봉인";
-            case EnemyIntent.DisruptFocus: return "집중 방해";
-            case EnemyIntent.SiphonUltimate: return "마력 흡수";
-            case EnemyIntent.Pressure: return "시간 압박";
-            case EnemyIntent.Regenerate: return "재생";
-            default: return "대기";
+            case EnemyIntent.Weaken: return CatalogText.Text("공격 약화","Weaken");
+            case EnemyIntent.Guard: return CatalogText.Text("경화","Guard");
+            case EnemyIntent.Fortify: return CatalogText.Text("진형 보호막","Fortify");
+            case EnemyIntent.MendAllies: return CatalogText.Text("아군 회복","Mend Allies");
+            case EnemyIntent.Suppress: return CatalogText.Text("지원 억제","Suppress");
+            case EnemyIntent.Seal: return CatalogText.Text("{0}번 칸 봉인","Seal Slot {0}",enemy.IntentSlot+1);
+            case EnemyIntent.CardSeal: return CatalogText.Text("카드 봉인","Seal Card");
+            case EnemyIntent.DisruptFocus: return CatalogText.Text("집중 방해","Disrupt Focus");
+            case EnemyIntent.SiphonUltimate: return CatalogText.Text("마력 흡수","Siphon Ultimate");
+            case EnemyIntent.Pressure: return CatalogText.Text("시간 압박","Time Pressure");
+            case EnemyIntent.Regenerate: return CatalogText.Text("재생","Regenerate");
+            default: return CatalogText.Text("대기","Wait");
         }
     }
     public static string IntentDescription(EnemyState enemy)
     {
         switch(enemy.Intent)
         {
-            case EnemyIntent.Weaken: return "다음 턴 피해 -"+(enemy.Enraged?25:15)+"%.";
-            case EnemyIntent.Guard: return "다음 턴 받는 피해 -30%.\n전열 경화는 후열을 10% 엄호합니다.";
-            case EnemyIntent.Fortify: return "적 진영 보호막 +3% (보스 1.5%).\n보호막 최대 8%.";
-            case EnemyIntent.MendAllies: return "적 진영 체력 2% 회복 (보스 0.75%).";
-            case EnemyIntent.Suppress: return "다음 턴 집중·재련·배율 증가량 -15%.";
-            case EnemyIntent.Seal: return "다음 턴 "+(enemy.IntentSlot+1)+"번 칸 봉인.";
-            case EnemyIntent.CardSeal: return "다음 턴 '"+(enemy.IntentCardName??"카드 1장")+"' 봉인.";
-            case EnemyIntent.DisruptFocus: return "다음 턴 집중 획득 -25%.";
-            case EnemyIntent.SiphonUltimate: return "궁극기 -"+(enemy.Enraged?15:10)+".";
-            case EnemyIntent.Pressure: return "남은 턴 -1 (웨이브당 1회).";
-            case EnemyIntent.Regenerate: return "체력 3% 회복 (보스 1%).";
-            default: return "대기.";
+            case EnemyIntent.Weaken: return CatalogText.Text("다음 턴 피해 -{0}%.","Your damage -{0}% next turn.",enemy.Enraged?25:15);
+            case EnemyIntent.Guard: return CatalogText.Text("다음 턴 받는 피해 -30%.\n전열 경화는 후열을 10% 엄호합니다.","Takes 30% less damage next turn.\nFront-row Guard protects the rear by 10%.");
+            case EnemyIntent.Fortify: return CatalogText.Text("적 진영 보호막 +3% (보스 1.5%).\n보호막 최대 8%.","All enemies gain 3% barrier (bosses 1.5%).\nBarrier cap: 8% of max HP.");
+            case EnemyIntent.MendAllies: return CatalogText.Text("적 진영 체력 2% 회복 (보스 0.75%).","All enemies heal 2% HP (bosses 0.75%).");
+            case EnemyIntent.Suppress: return CatalogText.Text("다음 턴 집중·재련·배율 증가량 -15%.","Focus, Forge and multiplier gains -15% next turn.");
+            case EnemyIntent.Seal: return CatalogText.Text("다음 턴 {0}번 칸 봉인.","Seal slot {0} next turn.",enemy.IntentSlot+1);
+            case EnemyIntent.CardSeal: return CatalogText.Text("다음 턴 '{0}' 봉인.","Seal '{0}' next turn.",CatalogText.Name(enemy.IntentCardName??"카드 1장"));
+            case EnemyIntent.DisruptFocus: return CatalogText.Text("다음 턴 집중 획득 -25%.","Focus gained -25% next turn.");
+            case EnemyIntent.SiphonUltimate: return CatalogText.Text("궁극기 -{0}.","Ultimate -{0}.",enemy.Enraged?15:10);
+            case EnemyIntent.Pressure: return CatalogText.Text("남은 턴 -1 (웨이브당 1회).","Turns left -1 (once per wave).");
+            case EnemyIntent.Regenerate: return CatalogText.Text("체력 3% 회복 (보스 1%).","Heal 3% HP (bosses 1%).");
+            default: return CatalogText.Text("대기.","Wait.");
         }
     }
 }

@@ -17,6 +17,8 @@ public class GameManager : MonoSingleton<GameManager>
     public bool InMenu { get; private set; } = true;
     public float Speed { get; private set; }
     float lastShortcut=-1;
+    const string LanguageKey="GameLanguage";
+    static string L(string text,params object[] args) => GameLocalization.Text(text,args);
 
     protected override void Awake()
     {
@@ -30,9 +32,12 @@ public class GameManager : MonoSingleton<GameManager>
             return;
         }
 
+        var language=(GameLanguage)PlayerPrefs.GetInt(LanguageKey,Application.systemLanguage==SystemLanguage.Korean?0:1);
+        GameLocalization.SetLanguage(language);
+        GameLocalization.Changed+=SaveLanguage;
         CurrentStage = Instantiate(stagePrefab);
         CurrentStage.Init();
-        Speed=PlayerPrefs.GetFloat("BattleSpeedV2",2);
+        Speed=Mathf.Clamp(PlayerPrefs.GetFloat("BattleSpeedV2",2),1,3);
         Audio=gameObject.AddComponent<GameAudio>();
         UI=gameObject.AddComponent<GameUI>();
         UI.Init(this);
@@ -47,7 +52,7 @@ public class GameManager : MonoSingleton<GameManager>
     }
     public void ContinueRun()
     {
-        var saved=RunSave.Read(); if(saved==null) { UI.Toast("이어할 기록이 없습니다."); return; }
+        var saved=RunSave.Read(); if(saved==null) { UI.Toast(L("이어할 기록이 없습니다.")); return; }
         Run=new RunEngine(saved); InMenu=false; Busy=false; CurrentStage.Show(Run); UI.CloseOverlay(); UI.Refresh();
     }
     public void ReturnToTitle()
@@ -68,7 +73,7 @@ public class GameManager : MonoSingleton<GameManager>
     public void Execute()
     {
         if(Busy || InMenu || UI.ModalOpen || Run==null) return;
-        if(!Run.CanExecute) { UI.Toast("봉인되지 않은 칸에 실행할 카드를 편성해 주세요."); return; }
+        if(!Run.CanExecute) { UI.Toast(L("봉인되지 않은 칸에 실행할 카드를 편성해 주세요.")); return; }
         StartCoroutine(PlaySequence());
     }
     IEnumerator PlaySequence()
@@ -97,7 +102,7 @@ public class GameManager : MonoSingleton<GameManager>
     public void ChooseCard(int index)
     {
         if(Busy || Run==null) return;
-        if(!Run.ChooseCard(index)) { UI.Toast("가방이 가득 찼습니다. 합성·판매하거나 골드를 선택하세요."); return; }
+        if(!Run.ChooseCard(index)) { UI.Toast(L("가방이 가득 찼습니다. 합성·판매하거나 골드를 선택하세요.")); return; }
         ChangedEncounter();
     }
     public void ChooseItem(int index) { Run.ChooseItem(index); ChangedEncounter(); }
@@ -109,7 +114,7 @@ public class GameManager : MonoSingleton<GameManager>
     public void Merge()
     {
         if(Busy || InMenu) return;
-        int count=Run.MergeAll(); UI.Toast(count>0?count+"회 합성했습니다.":"같은 카드·같은 성급 2장이 필요합니다.");
+        int count=Run.MergeAll(); UI.Toast(count>0?L("{0}회 합성했습니다.",count):L("같은 카드·같은 성급 2장이 필요합니다."));
         if(count>0) Audio.Play(GameSound.Reward); Commit();
     }
     public void Sell(int uid)
@@ -121,53 +126,56 @@ public class GameManager : MonoSingleton<GameManager>
         if(Run.Sell(uid))
         {
             Audio.Play(GameSound.Coin); Commit(); UI.AfterSale();
-            UI.Toast(cardName+" 판매  +"+price+" 골드");
+            UI.Toast(L("{0} 판매  +{1} 골드",cardName,price));
         }
-        else UI.Toast("마지막 카드 또는 궁극기 카드는 판매할 수 없습니다.");
+        else UI.Toast(L("마지막 카드 또는 궁극기 카드는 판매할 수 없습니다."));
     }
     public void MergeCards(int sourceUid,int targetUid)
     {
         if(Busy || InMenu || Run==null || !Run.MergeInto(sourceUid,targetUid)) return;
         Audio.Play(GameSound.Reward); Commit();
-        UI.Select(targetUid); UI.Toast(Run.State.Find(targetUid).Data.Name+" "+Run.State.Find(targetUid).Stars+"성 합성");
+        UI.Select(targetUid); UI.Toast(L("{0} {1}성 합성",Run.State.Find(targetUid).Data.Name,Run.State.Find(targetUid).Stars));
         if(UI.InventoryOpen) UI.ShowInventory();
     }
     public void RerollShop()
     {
         if(Busy || InMenu || Run==null) return;
-        if(!Run.RerollShop()) { UI.Toast("리롤할 골드가 부족합니다."); return; }
+        if(!Run.RerollShop()) { UI.Toast(L("리롤할 골드가 부족합니다.")); return; }
         Audio.Play(GameSound.Coin); Commit();
     }
     public void Ultimate()
     {
         if(Busy || InMenu || Run==null) return;
-        if(Run.Ultimate()) { Audio.Play(GameSound.Reward); UI.Toast("대거합 획득! 이번 턴 안에 시퀀스에 넣어 사용하세요."); Commit(); }
-        else UI.Toast(Run.State.Ultimate>=100?"궁극기 카드가 이미 있거나 가방·장착 칸이 가득 찼습니다.":"궁극기 게이지가 100 필요합니다.");
+        if(Run.Ultimate()) { Audio.Play(GameSound.Reward); UI.Toast(L("대거합 획득! 이번 턴 안에 시퀀스에 넣어 사용하세요.")); Commit(); }
+        else UI.Toast(L(Run.State.Ultimate>=100?"궁극기 카드가 이미 있거나 가방·장착 칸이 가득 찼습니다.":"궁극기 게이지가 100 필요합니다."));
     }
     public void Equip(int uid,int slot)
     {
         if(Busy || InMenu || Run==null || UI.ModalOpen) return;
-        if(slot==Run.State.SealedSlot) { UI.Toast("이번 턴에는 봉인된 칸입니다."); return; }
+        if(slot==Run.State.SealedSlot) { UI.Toast(L("이번 턴에는 봉인된 칸입니다.")); return; }
         if(Run.Equip(uid,slot)) { Audio.Play(GameSound.Click); Commit(); }
     }
     public void Unequip(int slot)
     {
         if(Busy || InMenu || Run==null || UI.ModalOpen) return;
-        if(!Run.Unequip(slot)) { UI.Toast("가방이 가득 찼습니다. 먼저 판매하거나 합성하세요."); return; }
+        if(!Run.Unequip(slot)) { UI.Toast(L("가방이 가득 찼습니다. 먼저 판매하거나 합성하세요.")); return; }
         Commit();
     }
     public void PlaceInBag(int uid,int slot)
     {
         if(Busy || InMenu || Run==null || UI.ModalOpen) return;
         if(Run.PlaceInBag(uid,slot)) { Audio.Play(GameSound.Click); Commit(); }
-        else UI.Toast("가방이 가득 찼습니다. 먼저 판매하거나 합성하세요.");
+        else UI.Toast(L("가방이 가득 찼습니다. 먼저 판매하거나 합성하세요."));
     }
-    public void AddDebugCard(int definition,int stars)
+    void SaveLanguage()
     {
-        if(Busy || InMenu || Run==null || definition<0 || definition>=CardCatalog.All.Length) return;
-        if(Run.BagCount>=RunEngine.BagCapacity) { UI.Toast("가방이 가득 찼습니다. 카드를 판매하거나 합성하세요."); return; }
-        var card=Run.AddCard(definition,Mathf.Clamp(stars,1,4));
-        Commit(); UI.Toast(card.Data.Name+" 추가");
+        PlayerPrefs.SetInt(LanguageKey,(int)GameLocalization.CurrentLanguage);
+        PlayerPrefs.Save();
+    }
+    protected override void OnDestroy()
+    {
+        GameLocalization.Changed-=SaveLanguage;
+        base.OnDestroy();
     }
     void Update()
     {
@@ -179,7 +187,6 @@ public class GameManager : MonoSingleton<GameManager>
         if(k.tKey.wasPressedThisFrame) Shortcut(KeyCode.T);
         if(k.tabKey.wasPressedThisFrame) Shortcut(KeyCode.Tab);
         if(k.uKey.wasPressedThisFrame) Shortcut(KeyCode.U);
-        if(k.f2Key.wasPressedThisFrame) Shortcut(KeyCode.F2);
         if(k.aKey.wasPressedThisFrame) Shortcut(KeyCode.A);
         if(k.dKey.wasPressedThisFrame) Shortcut(KeyCode.D);
         if(k.wKey.wasPressedThisFrame) Shortcut(KeyCode.W);
@@ -191,7 +198,6 @@ public class GameManager : MonoSingleton<GameManager>
         if(key==KeyCode.Escape) { if(!Busy) UI.TogglePause(); return; }
         if(InMenu || Busy || Run==null) return;
         if(key==KeyCode.Tab) { UI.ToggleInventory(); return; }
-        if(key==KeyCode.F2) { UI.ShowDebugCards(); return; }
         if(UI.ModalOpen && (!UI.InventoryOpen || (key!=KeyCode.Q && key!=KeyCode.E && key!=KeyCode.T))) return;
         switch(key)
         {
@@ -206,7 +212,7 @@ public class GameManager : MonoSingleton<GameManager>
         }
     }
 #if UNITY_EDITOR
-    // Editor-embedded and remote keyboard events can arrive through IMGUI rather than the input device.
+    // The embedded Game view can deliver keyboard events through IMGUI.
     void OnGUI()
     {
         var e=Event.current;

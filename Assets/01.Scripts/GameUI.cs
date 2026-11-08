@@ -35,11 +35,11 @@ public class GameUI : MonoBehaviour
     Transform tooltipAnchor;
     string overlayKind;
     int selected=-1, page;
-    int debugDefinition, debugStars=1;
     float toastUntil;
     float goldPulseUntil;
     Transform goldTransform;
     Vector2 lastCanvas;
+    static string L(string text,params object[] args) => GameLocalization.Text(text,args);
     Transform F(string name,Transform root=null)
     {
         root=root==null?CanvasTransform:root;
@@ -47,7 +47,7 @@ public class GameUI : MonoBehaviour
         return null;
     }
     T C<T>(string name,Transform root=null) where T:Component => F(name,root)?.GetComponent<T>();
-    void Put(string name,string value,Transform root=null) { var t=C<Text>(name,root); if(t!=null) t.text=value; }
+    void Put(string name,string value,Transform root=null) { var t=C<Text>(name,root); if(t!=null) t.text=L(value); }
     public void Init(GameManager manager)
     {
         Manager=manager;
@@ -88,8 +88,6 @@ public class GameUI : MonoBehaviour
         LayoutRightHud();
         var speed=MakeButton(rightHud,"SpeedButton",244,-76,108,44,"×2",Manager.SetSpeed,18);
         speedText=speed.GetComponentInChildren<Text>();
-        MakeButton(rightHud,"DebugCardsButton",0,-76,232,44,"F2 카드 추가",ShowDebugCards,18);
-        MakeButton(rightHud,"DebugClearButton",-152,-76,140,44,"클리어 UI",ShowClearPreview,18);
         damageText=Label(rightHud,"RunDamage",0,-132,352,36,"누적 피해 0",18,Cream); Outline(damageText);
         interferenceText=Label(rightHud,"Interference",0,-178,352,60,"",18,new Color(1,.71f,.57f)); Outline(interferenceText);
         execute=C<Button>("ExecuteButton"); Hook("ExecuteButton",Manager.Execute);
@@ -131,7 +129,35 @@ public class GameUI : MonoBehaviour
         toast.resizeTextForBestFit=true; toast.resizeTextMinSize=18; toast.resizeTextMaxSize=30; Outline(toast);
         toastPanel.gameObject.SetActive(false);
         goldTransform=F("GoldUI");
+        GameLocalization.Changed+=OnLanguageChanged;
+        RefreshStaticLabels();
         Layout();
+    }
+    void OnDestroy() { GameLocalization.Changed-=OnLanguageChanged; }
+    void RefreshStaticLabels()
+    {
+        Put("Label","Tab  가방 관리",F("Inventory",header));
+        Put("Label","Q 정리",F("Sort",header));
+        Put("Label","E 합성",F("Merge",header));
+        Put("Label","W 뒤집기",F("Flip",header));
+        Put("Caption","남은 턴",turnPanel);
+        if(Manager.Run==null) { Put("ExecuteText","실행"); Put("UltimateText",L("궁극기  {0}/100  [U]",0)); }
+    }
+    void OnLanguageChanged()
+    {
+        string current=overlayKind;
+        HideBuffTooltip();
+        toastPanel.gameObject.SetActive(false);
+        RefreshStaticLabels();
+        Refresh();
+        switch(current)
+        {
+            case "Settings": ShowSettings(); break;
+            case "Title": ShowTitle(); break;
+            case "Pause": ShowPause(); break;
+            case "Help": ShowHelp(false); break;
+            case "Inventory": ShowInventory(); break;
+        }
     }
     RectTransform StatusPanel(Transform parent,string name,float x,float y,float w,float h)
     {
@@ -160,7 +186,7 @@ public class GameUI : MonoBehaviour
     void ShowFocusTooltip()
     {
         if(ModalOpen || Manager.InMenu || Manager.Run==null) return;
-        ShowTooltip(focusBuff,"집중","현재 "+GameMath.Number(Manager.Run.State.Focus)+"\n턴 종료 시 사라집니다.\n거합의 피해를 강화합니다.");
+        ShowTooltip(focusBuff,L("집중"),L("현재 {0}\n턴 종료 시 사라집니다.\n거합의 피해를 강화합니다.",GameMath.Number(Manager.Run.State.Focus)));
     }
     void HideBuffTooltip(Transform owner=null)
     {
@@ -195,8 +221,10 @@ public class GameUI : MonoBehaviour
         var group=box.gameObject.AddComponent<CanvasGroup>(); group.blocksRaycasts=false;
         box.anchorMin=box.anchorMax=new Vector2(.5f,.5f); box.pivot=new Vector2(0,1);
         var heading=Label(box,"Title",24,-18,width-48,36,title,24,Mint,TextAnchor.UpperLeft);
+        heading.resizeTextForBestFit=false; heading.verticalOverflow=VerticalWrapMode.Overflow;
         float titleHeight=Mathf.Max(32,heading.preferredHeight); heading.rectTransform.sizeDelta=new Vector2(width-48,titleHeight);
         var body=Label(box,"Description",24,-(30+titleHeight),width-48,100,description,18,Cream,TextAnchor.UpperLeft);
+        body.resizeTextForBestFit=false; body.verticalOverflow=VerticalWrapMode.Overflow;
         float bodyHeight=Mathf.Max(32,body.preferredHeight); body.rectTransform.sizeDelta=new Vector2(width-48,bodyHeight);
         float height=titleHeight+bodyHeight+52; box.sizeDelta=new Vector2(width,height);
         float left=point.x+28;
@@ -270,6 +298,7 @@ public class GameUI : MonoBehaviour
     }
     public void Refresh()
     {
+        SetGameplayVisible(!Manager.InMenu);
         if(Manager.Run==null) return;
         var s=Manager.Run.State;
         if(s.Find(selected)==null) selected=s.Cards.Count>0?s.Cards[0].Uid:-1;
@@ -277,11 +306,11 @@ public class GameUI : MonoBehaviour
         RefreshBagCount();
         speedText.text="×"+Manager.Speed.ToString("0");
         Put("GoldText",s.Gold.ToString());
-        Put("FloorTurnText",s.Floor+"층 · "+s.Turn+"턴");
+        Put("FloorTurnText",L("{0}층 · {1}턴",s.Floor,s.Turn));
         Put("ExecuteText",Manager.Busy?"진행 중":Manager.Run.HasExecutableCard?"실행":"대기");
         execute.interactable=!Manager.Busy && s.Phase==RunPhase.Battle;
         ultimate.interactable=!Manager.Busy && s.Phase==RunPhase.Battle && s.Ultimate>=100;
-        Put("UltimateText","궁극기  "+s.Ultimate+"/100  [U]");
+        Put("UltimateText",L("궁극기  {0}/100  [U]",s.Ultimate));
         var fill=C<Image>("UltimateBarFill"); if(fill!=null) { fill.type=Image.Type.Filled; fill.fillMethod=Image.FillMethod.Horizontal; fill.fillAmount=s.Ultimate/100f; }
         if(!Manager.InMenu && !Manager.Busy)
         {
@@ -309,7 +338,8 @@ public class GameUI : MonoBehaviour
         {
             var seq=s.Find(s.Sequence[i]);
             slots[i].GetComponent<Image>().enabled=seq==null;
-            var slotLabel=slots[i].GetComponentInChildren<Text>(); slotLabel.text=i==s.SealedSlot?"봉인":"+"; slotLabel.fontSize=i==s.SealedSlot?24:48;
+            var slotLabel=slots[i].GetComponentInChildren<Text>(true); slotLabel.text=i==s.SealedSlot?L("봉인"):"+"; slotLabel.fontSize=i==s.SealedSlot?24:48;
+            slotLabel.gameObject.SetActive(seq==null);
             sequenceCards[i]=null;
             if(seq!=null)
             {
@@ -331,14 +361,14 @@ public class GameUI : MonoBehaviour
         view.transform.SetAsLastSibling();
         view.gameObject.SetActive(true); view.Bind(card,this,slot,compact); view.SetSelected(card.Uid==selected);
         bool cardSealed=Manager.Run.IsCardSealed(card.Uid);
-        view.SetSealed(cardSealed || (slot>=0 && slot==Manager.Run.State.SealedSlot),cardSealed?"카드 봉인":"칸 봉인");
+        view.SetSealed(cardSealed || (slot>=0 && slot==Manager.Run.State.SealedSlot),cardSealed?L("카드 봉인"):L("칸 봉인"));
         if(compact && slot==-1) view.SetBackFace(flippedBagCards.Contains(card.Uid));
         return view;
     }
     public void RefreshBattle()
     {
         var r=Manager.Run; if(r==null) return; var s=r.State;
-        damageText.text="누적 피해  "+GameMath.Number(s.TotalDamage);
+        damageText.text=L("누적 피해  {0}",GameMath.Number(s.TotalDamage));
         interferenceText.text=InterferenceText();
         int remaining=Math.Max(0,r.TurnLimit-s.Turn+1);
         turnsValue.text=remaining.ToString(); turnsValue.color=remaining<=2?new Color(1,.58f,.5f):Cream;
@@ -373,7 +403,7 @@ public class GameUI : MonoBehaviour
             int status=0;
             if(state.Guarding)EnemyStatusIcon(i,status++,Assets.Buff,"경화",()=>"받는 피해 -30%.");
             if(state.Rear && s.Enemies.Any(e=>e.Health>0 && !e.Rear && e.Guarding))EnemyStatusIcon(i,status++,Assets.Buff,"후열 엄호",()=>"선택 대상 공격 피해 -10%.");
-            if(state.Barrier>0)EnemyStatusIcon(i,status++,Assets.Buff,"보호막",()=>"남은 보호막 "+GameMath.Number(s.Enemies[index].Barrier));
+            if(state.Barrier>0)EnemyStatusIcon(i,status++,Assets.Buff,"보호막",()=>L("남은 보호막 {0}",GameMath.Number(s.Enemies[index].Barrier)));
             if(state.Enraged)EnemyStatusIcon(i,status++,ItemArt(ItemCatalog.WarHorn),"광폭화",()=>"공격 약화 25% · 궁극기 흡수 15.");
         }
     }
@@ -382,25 +412,29 @@ public class GameUI : MonoBehaviour
         var parent=enemyIntentIcons[index];
         var icon=Picture(parent,title+index,0,0,32,32,sprite); icon.preserveAspect=true;
         var rect=icon.rectTransform; rect.anchorMin=rect.anchorMax=rect.pivot=new Vector2(.5f,.5f); rect.anchoredPosition=new Vector2((slot%2)*36-18,-42-(slot/2)*36);
-        AttachTooltip(rect,()=>title,description);
+        AttachTooltip(rect,()=>L(title),()=>L(description()));
     }
     public string InterferenceText()
     {
         if(Manager.Run==null) return "";
         var s=Manager.Run.State; var effects=new List<string>();
-        if(s.Weakened) effects.Add("피해 -"+(Manager.Run.WeakenAmount*100).ToString("0")+"%"); if(s.FocusDisrupted) effects.Add("집중 획득 -25%");
-        if(s.SupportSuppressed)effects.Add("지원 효과 -15%");
-        if(s.SealedSlot>=0) effects.Add((s.SealedSlot+1)+"번 칸 봉인");
-        var sealedCard=s.Find(s.SealedCardUid); if(sealedCard!=null)effects.Add(sealedCard.Data.Name+" 카드 봉인");
-        if(s.LostTurns>0)effects.Add("기한 -"+s.LostTurns+"턴");
-        return effects.Count==0?"방해 효과 없음":"이번 턴 · "+string.Join(" / ",effects);
+        if(s.Weakened) effects.Add(L("피해 -{0}%",(Manager.Run.WeakenAmount*100).ToString("0"))); if(s.FocusDisrupted) effects.Add(L("집중 획득 -25%"));
+        if(s.SupportSuppressed)effects.Add(L("지원 효과 -15%"));
+        if(s.SealedSlot>=0) effects.Add(L("{0}번 칸 봉인",s.SealedSlot+1));
+        var sealedCard=s.Find(s.SealedCardUid); if(sealedCard!=null)effects.Add(L("{0} 카드 봉인",sealedCard.Data.Name));
+        if(s.LostTurns>0)effects.Add(L("기한 -{0}턴",s.LostTurns));
+        return effects.Count==0?L("방해 효과 없음"):L("이번 턴 · {0}",string.Join(" / ",effects));
     }
     void RefreshInfo()
     {
         var c=Manager.Run.State.Find(selected); if(c==null) return;
         foreach(var text in info.GetComponentsInChildren<Text>(true)) text.verticalOverflow=VerticalWrapMode.Overflow;
         Put("NameText",c.Data.Name,info); Put("DescriptionText",c.Data.Description(c.Stars),info);
+        var nameLabel=C<Text>("NameText",info);
+        nameLabel.verticalOverflow=VerticalWrapMode.Truncate;
+        nameLabel.resizeTextForBestFit=true; nameLabel.resizeTextMinSize=12; nameLabel.resizeTextMaxSize=24;
         Put("FamilyText",c.Data.Iai?"거합":"공통",info); Put("TypeText",c.Data.KindName,info);
+        foreach(string badge in new[]{"FamilyText","TypeText"}) { var label=C<Text>(badge,info); label.resizeTextForBestFit=true; label.resizeTextMinSize=12; label.resizeTextMaxSize=18; }
         var desc=C<Text>("DescriptionText",info); desc.verticalOverflow=VerticalWrapMode.Truncate; desc.resizeTextForBestFit=true; desc.resizeTextMinSize=18; desc.resizeTextMaxSize=24;
         C<Image>("Artwork",info).sprite=Art(c.Data);
         C<Image>("Artwork",info).color=new Color(1,.96f,.94f);
@@ -417,10 +451,10 @@ public class GameUI : MonoBehaviour
         for(int i=0;i<ItemCatalog.Count;i++) if(s.Items[i]>0)
         {
             int id=i;
-            var b=MakeButton(itemContent,"Item"+i,0,0,50,62,"",()=>ShowMessage(ItemCatalog.Names[id],ItemCatalog.Descriptions[id]+"\n\n보유 "+s.Items[id]+"개"),20);
+            var b=MakeButton(itemContent,"Item"+i,0,0,50,62,"",()=>ShowMessage(ItemCatalog.Names[id],ItemCatalog.Descriptions[id]+"\n\n"+L("보유 {0}개",s.Items[id])),20);
             var layout=b.gameObject.AddComponent<LayoutElement>(); layout.preferredWidth=50; layout.preferredHeight=62;
             b.GetComponent<Image>().sprite=ItemArt(i); b.GetComponent<Image>().type=Image.Type.Simple; b.GetComponent<Image>().preserveAspect=true;
-            AttachTooltip(b.transform,()=>ItemCatalog.Names[id],()=>ItemCatalog.Descriptions[id]+"\n보유 "+s.Items[id]+"개");
+            AttachTooltip(b.transform,()=>ItemCatalog.Names[id],()=>ItemCatalog.Descriptions[id]+"\n"+L("보유 {0}개",s.Items[id]));
             var label=b.GetComponentInChildren<Text>(); label.text=s.Items[i]>1?s.Items[i].ToString():""; label.alignment=TextAnchor.LowerRight; label.color=Cream; Outline(label);
         }
     }
@@ -440,7 +474,7 @@ public class GameUI : MonoBehaviour
             icon.color=i<Manager.Run.State.Node?new Color(.55f,.55f,.55f):Color.white;
             if(i==Manager.Run.State.Node) Picture(icon.transform,"Current",-6,6,54,54,Assets.CurrentNode);
         }
-        var waveValue=Label(nodes,"CurrentWaveValue",110,-55,200,26,"웨이브 "+(Manager.Run.State.Wave+1)+"/"+(Manager.Run.IsBoss?1:3),18,Cream);
+        var waveValue=Label(nodes,"CurrentWaveValue",110,-55,200,26,L("웨이브 {0}/{1}",Manager.Run.State.Wave+1,Manager.Run.IsBoss?1:3),18,Cream);
         GameTypography.Apply(waveValue,Assets,true); Outline(waveValue);
     }
     void Layout()
@@ -477,8 +511,9 @@ public class GameUI : MonoBehaviour
         var right=C<RectTransform>("BottomRightUI"); float height=right.rect.height;
         info.sizeDelta=new Vector2(0,height-236);
         Place(C<RectTransform>("Artwork",info),info,28,-24,64,64); C<Image>("Artwork",info).preserveAspect=true;
-        var name=C<Text>("NameText",info); Place(name.rectTransform,info,104,-24,128,34);
-        name.resizeTextForBestFit=true; name.resizeTextMinSize=16; name.resizeTextMaxSize=26;
+        var name=C<Text>("NameText",info); Place(name.rectTransform,info,104,-24,144,34);
+        name.verticalOverflow=VerticalWrapMode.Truncate;
+        name.resizeTextForBestFit=true; name.resizeTextMinSize=12; name.resizeTextMaxSize=24;
         Place(C<RectTransform>("FamilyBadge",info),info,108,-72,92,30);
         Place(C<RectTransform>("TypeBadge",info),info,208,-72,100,30);
         Place(C<RectTransform>("FamilyText",info),F("FamilyBadge",info),6,-3,80,24);
@@ -572,7 +607,7 @@ public class GameUI : MonoBehaviour
     }
     public void Toast(string message)
     {
-        toast.text=message; toastUntil=Time.unscaledTime+4;
+        toast.text=L(message); toastUntil=Time.unscaledTime+4;
         toastPanel.sizeDelta=new Vector2(Mathf.Clamp(toast.preferredWidth+64,340,1280),76);
         toastPanel.gameObject.SetActive(true); toastPanel.SetAsLastSibling();
     }
@@ -643,8 +678,9 @@ public class GameUI : MonoBehaviour
     }
     public void ShowTitle()
     {
+        SetGameplayVisible(false);
         var w=Overlay("Title",960,660);
-        Label(w,"Title",70,-72,820,100,"프로토타입",60,Ink);
+        Label(w,"Title",70,-72,820,100,"Impact order",60,Ink);
         MakeButton(w,"NewRun",110,-240,350,76,"게임 시작",()=>{var s=RunSave.Read(); if(s!=null && s.Phase!=RunPhase.Victory && s.Phase!=RunPhase.Defeat) Confirm("진행 중인 탐험을 새 탐험으로 바꿀까요?",Manager.NewRun); else Manager.NewRun();},30);
         var saved=RunSave.Read();
         var cont=MakeButton(w,"Continue",500,-240,350,76,"이어하기",Manager.ContinueRun,30);
@@ -653,21 +689,25 @@ public class GameUI : MonoBehaviour
         MakeButton(w,"Settings",370,-394,220,64,"설정",ShowSettings,24);
         MakeButton(w,"Quit",630,-394,220,64,"종료",()=>Application.Quit(),24);
     }
+    void SetGameplayVisible(bool visible)
+    {
+        foreach(var root in new[]{panel,rightHud,items,nodes,turnPanel,playerBuffs})
+            if(root!=null)root.gameObject.SetActive(visible);
+        if(!visible)
+            foreach(var target in targetButtons)if(target!=null)target.SetActive(false);
+    }
     public void ShowHelp(bool first)
     {
         var w=Overlay("Help",1080,760);
         Label(w,"Title",50,-38,980,60,"숨을 고르고, 순서를 만든다",38,Ink);
         Label(w,"Instructions",85,-126,910,460,
-            "1   집중 → 강화 → 거합 순으로 시퀀스를 편성하세요.\n\n"+
-            "2   가방 카드를 드래그하거나 두 번 눌러 장착합니다.\n     가방 우클릭은 설명 뒷면, 시퀀스 우클릭은 장착 해제입니다.\n\n"+
-            "3   코스트 없이 6칸을 편성합니다. 집중은 턴 종료 시 사라집니다.\n     적의 다음 행동을 보고 약화·집중 방해·봉인에 대비하세요.\n\n"+
-            "4   제한 턴 안에 적을 전부 처치하세요. 하트를 눌러 대상을 고릅니다.\n     플레이어 체력은 없고, 시간이 끝나면 탐험이 끝납니다.\n\n"+
-            "5   같은 카드·같은 성급 2장을 합성하면 최대 4성이 됩니다.\n     웨이브마다 카드, 스테이지마다 아이템을 얻습니다.",25,Ink,TextAnchor.UpperLeft);
-        Label(w,"Keys",70,-610,940,36,"Space 실행 · Tab 가방 · A/D 페이지 · W 뒤집기 · Q 정리 · E 합성 · U 궁극기 · F2 카드",18,Ink);
+            L(UiTranslations.HelpInstructions),25,Ink,TextAnchor.UpperLeft);
+        Label(w,"Keys",70,-610,940,36,"Space 실행 · Tab 가방 · A/D 페이지 · W 뒤집기 · Q 정리 · E 합성 · U 궁극기",18,Ink);
         MakeButton(w,"Start",340,-675,400,56,first?"첫 번째 수업 시작":"알겠어",()=>{PlayerPrefs.SetInt("ReadIntro",1);PlayerPrefs.Save();CloseOverlay();if(Manager.InMenu)ShowTitle();else Refresh();},26);
     }
     public void TogglePause()
     {
+        if(Manager.Busy) return;
         if(Manager.InMenu) { ShowTitle(); return; }
         if(overlayKind=="Pause" || overlayKind=="Settings" || overlayKind=="Help") { CloseOverlay(); Refresh(); return; }
         if(ModalOpen) { if(overlayKind=="Phase") ShowPause(); else {CloseOverlay();Refresh();} return; }
@@ -685,12 +725,23 @@ public class GameUI : MonoBehaviour
     }
     void ShowSettings()
     {
-        var w=Overlay("Settings",720,560);
-        Label(w,"Title",40,-45,640,65,"설정",40,Ink);
-        MakeButton(w,"Volume",100,-160,520,65,"사운드  "+(Manager.Audio.Muted?"끔":"켬"),()=>{Manager.Audio.ToggleMute();ShowSettings();},27);
-        MakeButton(w,"BattleSpeed",100,-255,520,65,"전투 속도  ×"+Manager.Speed,()=>{Manager.SetSpeed();ShowSettings();},27);
-        MakeButton(w,"Fullscreen",100,-350,520,65,"전체 화면  "+(Screen.fullScreen?"켬":"끔"),()=>{Screen.fullScreen=!Screen.fullScreen;},27);
-        MakeButton(w,"Back",220,-450,280,58,"돌아가기",()=>{CloseOverlay();if(Manager.InMenu)ShowTitle();else ShowPause();},25);
+        var w=Overlay("Settings",760,700);
+        Label(w,"Title",40,-34,680,60,"설정",40,Ink);
+        MakeButton(w,"Volume",100,-126,560,62,L("사운드  {0}",L(Manager.Audio.Muted?"끔":"켬")),()=>{Manager.Audio.ToggleMute();ShowSettings();},27);
+        MakeButton(w,"BattleSpeed",100,-212,560,62,L("전투 속도  ×{0}",Manager.Speed),()=>{Manager.SetSpeed();ShowSettings();},27);
+        MakeButton(w,"Fullscreen",100,-298,560,62,L("전체 화면  {0}",L(Screen.fullScreen?"켬":"끔")),()=>StartCoroutine(ToggleFullscreen()),27);
+        Label(w,"LanguageCaption",100,-392,560,36,"언어",24,Ink);
+        var korean=MakeButton(w,"Korean",100,-446,268,62,"한국어",()=>GameLocalization.SetLanguage(GameLanguage.Korean),25);
+        var english=MakeButton(w,"English",392,-446,268,62,"English",()=>GameLocalization.SetLanguage(GameLanguage.English),25);
+        korean.interactable=GameLocalization.CurrentLanguage!=GameLanguage.Korean;
+        english.interactable=GameLocalization.CurrentLanguage!=GameLanguage.English;
+        MakeButton(w,"Back",240,-586,280,58,"돌아가기",()=>{CloseOverlay();if(Manager.InMenu)ShowTitle();else ShowPause();},25);
+    }
+    IEnumerator ToggleFullscreen()
+    {
+        Screen.fullScreen=!Screen.fullScreen;
+        yield return null;
+        if(overlayKind=="Settings") ShowSettings();
     }
     public void ShowMessage(string title,string message)
     {
@@ -714,7 +765,7 @@ public class GameUI : MonoBehaviour
         bool item=s.Phase==RunPhase.ItemReward;
         var w=Overlay("Phase",1360,790);
         Label(w,"Title",40,-28,1280,65,item?"한 걸음 더 깊이":"웨이브 돌파",40,Ink);
-        Label(w,"Subtitle",60,-103,1240,40,item?"탐험 내내 함께할 아이템을 고르세요.":"카드 "+Manager.Run.RewardCopies+"장을 선택하세요. 표시된 성급으로 획득합니다.",24,Ink);
+        Label(w,"Subtitle",60,-103,1240,40,item?L("탐험 내내 함께할 아이템을 고르세요."):L("카드 {0}장을 선택하세요. 표시된 성급으로 획득합니다.",Manager.Run.RewardCopies),24,Ink);
         for(int i=0;i<3;i++)
         {
             int index=i; int id=s.Offers[i];
@@ -731,31 +782,31 @@ public class GameUI : MonoBehaviour
                 var card=Instantiate(Assets.CardPrefab,w); card.gameObject.SetActive(true);
                 card.Bind(new OwnedCard(-100-i,id,s.OfferStars[i]),this,-2,false,()=>Manager.ChooseCard(index));
                 PlaceCard(card,w,205+i*410,-175,.82f);
-                MakeButton(w,"Pick"+i,140+i*410,-625,340,60,Manager.Run.RewardCopies+"장 획득",()=>Manager.ChooseCard(index),25);
+                MakeButton(w,"Pick"+i,140+i*410,-625,340,60,L("{0}장 획득",Manager.Run.RewardCopies),()=>Manager.ChooseCard(index),25);
             }
         }
         if(!item)
         {
-            MakeButton(w,"Skip",870,-715,360,48,"카드 대신 골드 +"+Manager.Run.RewardGold,()=>Manager.ChooseCard(-1),23);
-            MakeButton(w,"Manage",100,-715,360,48,"가방 "+Manager.Run.BagCount+"/16 · 합성 / 판매",ShowInventory,23);
+            MakeButton(w,"Skip",870,-715,360,48,L("카드 대신 골드 +{0}",Manager.Run.RewardGold),()=>Manager.ChooseCard(-1),23);
+            MakeButton(w,"Manage",100,-715,360,48,L("가방 {0}/16 · 합성 / 판매",Manager.Run.BagCount),ShowInventory,23);
         }
     }
     void ShowShop()
     {
         var s=Manager.Run.State; var w=Overlay("Phase",1360,820);
-        Label(w,"Title",40,-25,1280,65,"틈새의 상점     "+s.Gold+" 골드",39,Ink);
+        Label(w,"Title",40,-25,1280,65,L("틈새의 상점     {0} 골드",s.Gold),39,Ink);
         Label(w,"Subtitle",50,-100,1260,40,"카드 구매 · 판매 · 카드 1장 성급 강화",24,Ink);
         for(int i=0;i<3;i++)
         {
             int index=i; var card=Instantiate(Assets.CardPrefab,w); card.gameObject.SetActive(true);
             card.Bind(new OwnedCard(-100-i,s.Offers[i],s.OfferStars[i]),this,-2,false,()=>{});
             PlaceCard(card,w,205+i*410,-175,.82f);
-            var buy=MakeButton(w,"Buy"+i,140+i*410,-625,340,60,s.Bought[i]?"구매 완료":Manager.Run.ShopPrice(i)+" 골드 · 구매",()=>{if(Manager.Run.Buy(index)){Manager.Audio.Play(GameSound.Coin);Manager.Commit();}else Toast("골드나 가방 공간이 부족합니다.");},25);
+            var buy=MakeButton(w,"Buy"+i,140+i*410,-625,340,60,s.Bought[i]?L("구매 완료"):L("{0} 골드 · 구매",Manager.Run.ShopPrice(i)),()=>{if(Manager.Run.Buy(index)){Manager.Audio.Play(GameSound.Coin);Manager.Commit();}else Toast("골드나 가방 공간이 부족합니다.");},25);
             buy.interactable=!s.Bought[i];
         }
         MakeButton(w,"Manage",100,-735,400,55,"가방 관리 / 성급 강화",ShowInventory,25);
         MakeButton(w,"Leave",860,-735,400,55,"다음 스테이지로",Manager.LeaveShop,25);
-        var reroll=MakeButton(w,"Reroll",530,-735,300,55,"리롤  "+Manager.Run.RerollPrice+" 골드",Manager.RerollShop,24);
+        var reroll=MakeButton(w,"Reroll",530,-735,300,55,L("리롤  {0} 골드",Manager.Run.RerollPrice),Manager.RerollShop,24);
         reroll.interactable=s.Gold>=Manager.Run.RerollPrice;
     }
     public void ShowInventory()
@@ -766,7 +817,7 @@ public class GameUI : MonoBehaviour
         var managedOrder=bagOrder.Concat(s.Cards.Where(c=>Array.IndexOf(s.Sequence,c.Uid)>=0)).ToList();
         if(!managedOrder.Any(c=>c.Uid==selected)) selected=managedOrder.Count>0?managedOrder[0].Uid:-1;
         var w=Overlay("Inventory",1500,900); inventoryCards.Clear();
-        Label(w,"Title",40,-25,1420,60,"가방 관리   "+Manager.Run.BagCount+" / 16",36,Ink);
+        Label(w,"Title",40,-25,1120,60,L("가방 관리   {0} / 16",Manager.Run.BagCount),36,Ink);
         var inventoryGold=Rect(w,"InventoryGold",1240,-32,200,44);
         var goldIcon=Picture(inventoryGold,"Icon",0,-4,36,36,Assets.Gold); goldIcon.preserveAspect=true;
         var goldValue=Label(inventoryGold,"Value",48,0,152,44,s.Gold.ToString(),30,Ink,TextAnchor.MiddleLeft);
@@ -778,7 +829,7 @@ public class GameUI : MonoBehaviour
             var card=c;
             var view=Instantiate(Assets.CardPrefab,w); view.gameObject.SetActive(true);
             view.Bind(card,this,-2,true,()=>{selected=card.Uid;ShowInventory();}); view.SetSelected(card.Uid==selected);
-            view.SetSealed(Manager.Run.IsCardSealed(card.Uid),"카드 봉인");
+            view.SetSealed(Manager.Run.IsCardSealed(card.Uid),L("카드 봉인"));
             PlaceCard(view,w,72+(n%5)*180,-132-(n/5)*132,.57f); inventoryCards.Add(view);
             if(Array.IndexOf(s.Sequence,card.Uid)>=0)
             {
@@ -795,11 +846,11 @@ public class GameUI : MonoBehaviour
             Label(details.transform,"CardName",28,-24,394,52,selectedCard.Data.Name,30,Cream);
             Label(details.transform,"Stars",28,-90,394,36,new string('★',selectedCard.Stars),24,new Color(1,.86f,.57f));
             Label(details.transform,"Description",30,-156,390,230,selectedCard.Data.Description(selectedCard.Stars),24,Cream,TextAnchor.UpperLeft);
-            Label(details.transform,"CardStats",30,-394,390,38,new[]{"회색","하늘색","금색","프리즘"}[selectedCard.Data.Rarity]+" · "+selectedCard.Stars+"성",18,Cream);
-            MakeButton(w,"Sell",1030,-550,370,58,"판매  +"+Manager.Run.SellPrice(selectedCard)+" 골드",()=>Manager.Sell(selectedCard.Uid),25);
+            Label(details.transform,"CardStats",30,-394,390,38,L("{0} · {1}성",L(new[]{"회색","하늘색","금색","프리즘"}[selectedCard.Data.Rarity]),selectedCard.Stars),18,Cream);
+            MakeButton(w,"Sell",1030,-550,370,58,L("판매  +{0} 골드",Manager.Run.SellPrice(selectedCard)),()=>Manager.Sell(selectedCard.Uid),25);
             if(s.Phase==RunPhase.Shop)
             {
-                var upgrade=MakeButton(w,"Upgrade",1030,-635,370,58,s.ShopMerged?"이번 상점 강화 완료":"성급 +1  ·  "+(40+selectedCard.Stars*20)+" 골드",()=>{if(Manager.Run.BuyUpgrade(selectedCard.Uid)){Manager.Commit();ShowInventory();}else Toast("골드가 부족하거나 이미 강화했습니다.");},24);
+                var upgrade=MakeButton(w,"Upgrade",1030,-635,370,58,s.ShopMerged?L("이번 상점 강화 완료"):L("성급 +1  ·  {0} 골드",40+selectedCard.Stars*20),()=>{if(Manager.Run.BuyUpgrade(selectedCard.Uid)){Manager.Commit();ShowInventory();}else Toast("골드가 부족하거나 이미 강화했습니다.");},24);
                 upgrade.interactable=!s.ShopMerged && selectedCard.Stars<4;
             }
         }
@@ -807,46 +858,9 @@ public class GameUI : MonoBehaviour
         MakeButton(w,"Sort",510,-805,310,58,"Q 정리",Sort,24);
         MakeButton(w,"Back",1030,-805,370,58,"돌아가기",CloseInventory,26);
     }
-    public void ShowDebugCards()
+    void ShowEnding()
     {
-        if(Manager.InMenu || Manager.Run==null || Manager.Busy) return;
-        var w=Overlay("DebugCards",1540,920);
-        Label(w,"Title",40,-28,1460,60,"디버그 · 카드 추가",36,Ink);
-        Label(w,"Hint",50,-90,1420,32,"카드 선택 → 성급 설정 → 가방에 추가",18,Ink);
-        for(int i=0;i<CardCatalog.All.Length;i++)
-        {
-            int id=i; var d=CardCatalog.All[i];
-            var button=MakeButton(w,"CardChoice"+i,44+(i%5)*184,-150-(i/5)*88,172,76,"",()=>{debugDefinition=id;ShowDebugCards();},18);
-            CardUI.ApplyFrame(button.GetComponent<Image>(),Assets,d.Rarity,true);
-            var art=Picture(button.transform,"Art",12,-16,48,48,Art(d)); art.preserveAspect=true;
-            Label(button.transform,"CardName",66,-12,94,58,d.Name,18,id==debugDefinition?Mint:Cream);
-            if(id==debugDefinition)
-            {
-                var selectedBorder=Picture(button.transform,"Selected",0,0,172,84,Assets.SelectionCorners);
-                selectedBorder.type=Image.Type.Sliced; selectedBorder.color=Color.white;
-            }
-        }
-        var detail=StatusPanel(w,"DebugCardDetails",994,-150,490,594);
-        var definition=CardCatalog.All[debugDefinition];
-        var icon=Picture(detail,"Art",30,-28,86,86,Art(definition)); icon.preserveAspect=true;
-        Label(detail,"CardName",130,-30,330,72,definition.Name,30,Cream);
-        Label(detail,"Description",30,-142,430,176,definition.Description(debugStars),24,Cream,TextAnchor.UpperLeft);
-        Label(detail,"StarCaption",30,-340,150,46,"성급",24,Cream,TextAnchor.MiddleLeft);
-        MakeButton(detail,"StarMinus",194,-340,56,46,"−",()=>{debugStars=Math.Max(1,debugStars-1);ShowDebugCards();},24);
-        Label(detail,"StarValue",258,-340,118,46,debugStars+"성",24,Cream);
-        MakeButton(detail,"StarPlus",388,-340,56,46,"+",()=>{debugStars=Math.Min(4,debugStars+1);ShowDebugCards();},24);
-        MakeButton(detail,"AddToBag",30,-510,430,58,"가방에 추가",()=>{Manager.AddDebugCard(debugDefinition,debugStars);Put("Capacity","가방 "+Manager.Run.BagCount+" / 16",w);},24);
-        MakeButton(w,"Back",1124,-810,360,60,"돌아가기",()=>{CloseOverlay();Refresh();},24);
-        Label(w,"Capacity",54,-814,820,52,"가방 "+Manager.Run.BagCount+" / 16",24,Ink,TextAnchor.MiddleLeft);
-    }
-    void ShowClearPreview()
-    {
-        if(Manager.InMenu || Manager.Run==null || Manager.Busy)return;
-        ShowEnding(true);
-    }
-    void ShowEnding(bool previewClear=false)
-    {
-        var s=Manager.Run.State; bool win=previewClear || s.Phase==RunPhase.Victory;
+        var s=Manager.Run.State; bool win=s.Phase==RunPhase.Victory;
         if(!win)
         {
             var gameOver=Overlay("Phase",800,410);
@@ -854,18 +868,15 @@ public class GameUI : MonoBehaviour
             MakeButton(gameOver,"Retry",75,-190,300,68,"다시하기",Manager.NewRun,30);
             MakeButton(gameOver,"Main",425,-190,300,68,"메인으로",Manager.ReturnToTitle,30);
             MakeButton(gameOver,"Info",275,-295,250,58,"정보",()=>ShowMessage("진행 정보",
-                "돌파 웨이브   "+s.WavesCleared+" / 30\n최대 단일 타격   "+GameMath.Number(s.BestHit)+
-                "\n누적 피해량   "+GameMath.Number(s.TotalDamage)+"\n실행한 카드   "+s.CardsPlayed+"장"),24);
+                L("돌파 웨이브   {0} / 30\n최대 타격   {1}\n누적 피해   {2}\n실행한 카드   {3}장",s.WavesCleared,GameMath.Number(s.BestHit),GameMath.Number(s.TotalDamage),s.CardsPlayed)),24);
             return;
         }
         var w=Overlay("Phase",960,660);
         Label(w,"Title",70,-62,820,100,"클리어",60,Ink);
         Label(w,"ClearInfo",120,-218,720,184,
-            "돌파 웨이브   "+s.WavesCleared+" / 30\n최대 타격   "+GameMath.Number(s.BestHit)+
-            "\n누적 피해   "+GameMath.Number(s.TotalDamage)+"\n실행한 카드   "+s.CardsPlayed+"장",26,Ink);
+            L("돌파 웨이브   {0} / 30\n최대 타격   {1}\n누적 피해   {2}\n실행한 카드   {3}장",s.WavesCleared,GameMath.Number(s.BestHit),GameMath.Number(s.TotalDamage),s.CardsPlayed),26,Ink);
         MakeButton(w,"Retry",110,-490,350,76,"다시하기",Manager.NewRun,30);
         MakeButton(w,"Main",500,-490,350,76,"메인으로",Manager.ReturnToTitle,30);
-        if(previewClear)MakeButton(w,"ClosePreview",788,-24,140,44,"닫기",()=>{CloseOverlay();Refresh();},20);
     }
     static void PlaceCard(CardUI card,Transform parent,float x,float y,float scale)
     {
@@ -882,9 +893,10 @@ public class GameUI : MonoBehaviour
     }
     Text Label(Transform parent,string name,float x,float y,float w,float h,string value,int size,Color color,TextAnchor align=TextAnchor.MiddleCenter)
     {
-        var rt=Rect(parent,name,x,y,w,h); var t=rt.gameObject.AddComponent<Text>(); t.font=Assets.Font; t.fontSize=size; t.color=color; t.text=value; t.alignment=align; t.raycastTarget=false;
-        t.horizontalOverflow=HorizontalWrapMode.Wrap; t.verticalOverflow=VerticalWrapMode.Overflow;
+        var rt=Rect(parent,name,x,y,w,h); var t=rt.gameObject.AddComponent<Text>(); t.font=Assets.Font; t.fontSize=size; t.color=color; t.text=L(value); t.alignment=align; t.raycastTarget=false;
+        t.horizontalOverflow=HorizontalWrapMode.Wrap; t.verticalOverflow=VerticalWrapMode.Truncate;
         GameTypography.Apply(t,Assets,size>=30 || name.Contains("Name") || name=="Title");
+        t.resizeTextForBestFit=true; t.resizeTextMinSize=14; t.resizeTextMaxSize=t.fontSize;
         return t;
     }
     Button MakeButton(Transform parent,string name,float x,float y,float w,float h,string value,Action clicked,int size)
@@ -898,14 +910,17 @@ public class GameUI : MonoBehaviour
         t.rectTransform.anchorMin=Vector2.zero; t.rectTransform.anchorMax=Vector2.one;
         t.rectTransform.offsetMin=new Vector2(16,8); t.rectTransform.offsetMax=new Vector2(-16,-8);
         t.verticalOverflow=VerticalWrapMode.Truncate;
-        GameTypography.Apply(t,Assets,true); return b;
+        GameTypography.Apply(t,Assets,true);
+        t.resizeTextForBestFit=true; t.resizeTextMinSize=14; t.resizeTextMaxSize=t.fontSize;
+        return b;
     }
     Button MakeHeaderButton(Transform parent,string name,float x,float width,string value,Action clicked)
     {
         var rt=Rect(parent,name,x,-10,width,36);
         var label=Label(rt,"Label",8,-2,width-16,32,value,21,Cream);
         label.verticalOverflow=VerticalWrapMode.Truncate;
-        GameTypography.Apply(label,Assets,true); label.raycastTarget=true; Outline(label);
+        GameTypography.Apply(label,Assets,true); label.resizeTextForBestFit=true; label.resizeTextMinSize=14; label.resizeTextMaxSize=label.fontSize;
+        label.raycastTarget=true; Outline(label);
         var button=rt.gameObject.AddComponent<Button>(); button.targetGraphic=label;
         button.navigation=new Navigation{mode=Navigation.Mode.None};
         var colors=button.colors; colors.highlightedColor=new Color(1,.8f,.45f); colors.pressedColor=Mint;

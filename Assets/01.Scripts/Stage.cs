@@ -191,7 +191,7 @@ public class Stage : MonoBehaviour
             vfx.Shake(heavy?.075f:.03f);
             Vector3 target=Position(result.Targets.Count>0?result.Targets[0]:0);
             string damageText=GameMath.Number(result.Damage)+(string.IsNullOrEmpty(result.ChanceText)?"":"\n"+result.ChanceText);
-            if(result.BarrierDamage>0)damageText+="\n보호막 "+GameMath.Number(result.BarrierDamage);
+            if(result.BarrierDamage>0)damageText+="\n"+GameLocalization.Text("보호막 {0}",GameMath.Number(result.BarrierDamage));
             ui.Floating(target+Vector3.up*.8f,damageText,result.ChanceSuccess?new Color(1,.87f,.4f):heavy?new Color(1,.75f,.4f):Color.white,heavy?48:38);
             yield return new WaitForSecondsRealtime(heavy?.045f:.02f);
             for(float t=0;t<.32f;t+=Time.deltaTime*speed)
@@ -211,7 +211,7 @@ public class Stage : MonoBehaviour
         }
         else
         {
-            string message=result.FocusAfter!=result.FocusBefore?"집중 "+GameMath.Number(result.FocusAfter):result.Card.Data.Name;
+            string message=result.FocusAfter!=result.FocusBefore?GameLocalization.Text("집중 {0}",GameMath.Number(result.FocusAfter)):result.Card.Data.Name;
             if(!string.IsNullOrEmpty(result.ChanceText))message+="\n"+result.ChanceText;
             ui.Floating(playerHome+Vector3.up,message,new Color(.65f,1,.88f),32);
             vfx.Burst(PlayerCenter,BattleVFX.Focus,10,.5f);

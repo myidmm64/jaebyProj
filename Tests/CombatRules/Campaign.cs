@@ -1,123 +1,75 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Text.Json;
 
-// Exercises the shipping rules using only earned rewards, gold, legal costs and legal merges.
+// Tests production progression topology independently of an automated combat policy.
+// Battle victory is injected so these checks do not claim to prove game balance.
 public static class Campaign
 {
-    sealed class Plan
+    public static int Run()
     {
-        public RunEngine Engine;
-        public TurnContext Context=new();
-        public List<int> Cards=new();
-        public int Cost;
-        public double Score;
-    }
-    static RunState Copy(RunState s) => new RunState {
-        Focus=s.Focus, Items=s.Items, Target=s.Target, Cards=s.Cards, Ultimate=s.Ultimate,
-        Enemies=s.Enemies.Select(e=>new EnemyState{Name=e.Name,Kind=e.Kind,Health=e.Health,MaxHealth=e.MaxHealth}).ToList()
-    };
-    static TurnContext Copy(TurnContext t) => new TurnContext {
-        Flat=t.Flat, Mark=t.Mark, Echo=t.Echo, Executed=t.Executed,
-        Amplifiers=new Dictionary<int,double>(t.Amplifiers)
-    };
-    static List<int> Search(RunEngine game)
-    {
-        var original=game.State; double hp=original.Enemies.Sum(e=>(double)e.Health);
-        var beam=new List<Plan>{new Plan{Engine=new RunEngine(Copy(original))}};
-        Plan best=null;
-        double ratio=original.Cards.Where(c=>c.Data.IsAttack).Select(c=>c.Data.Ratio(c.Stars)).DefaultIfEmpty(1).Max();
-        for(int depth=0;depth<6;depth++)
+        int checks=0;
+        void Check(bool value,string message) { if(!value)throw new Exception(message); checks++; }
+        foreach(int seed in new[]{1,17,456})
         {
-            var next=new List<Plan>();
-            foreach(var p in beam)
-            foreach(var c in original.Cards)
+            var game=RunEngine.New(seed);
+            int battles=0,shops=0,itemRewards=0,cardRewards=0;
+            var visited=new HashSet<string>();
+            int safety=0;
+            while(game.State.Phase!=RunPhase.Victory && ++safety<200)
             {
-                if(p.Cards.Contains(c.Uid) || p.Cost+c.Data.Cost>game.Budget)continue;
-                var candidate=new Plan{Engine=new RunEngine(Copy(p.Engine.State)),Context=Copy(p.Context),Cards=new List<int>(p.Cards),Cost=p.Cost+c.Data.Cost};
-                candidate.Cards.Add(c.Uid); candidate.Engine.Resolve(c,candidate.Context);
-                double left=candidate.Engine.State.Enemies.Sum(e=>(double)e.Health);
-                if(left==0)return candidate.Cards;
-                double mult=Math.Pow(1.5,original.Items[1])*candidate.Context.Mark;
-                foreach(var amp in candidate.Context.Amplifiers.Values)mult*=1+amp;
-                double future=0;
-                foreach(var attack in original.Cards.Where(x=>x.Data.IsAttack && !candidate.Cards.Contains(x.Uid)))
-                {
-                    var d=attack.Data;
-                    double amount=(d.Value(attack.Stars)+candidate.Context.Flat+candidate.Engine.State.Focus*d.Ratio(attack.Stars))*d.Hits*(1+candidate.Context.Echo)*mult;
-                    future=Math.Max(future,amount);
-                }
-                double carry=game.TurnLimit-original.Turn>1?.5:0;
-                candidate.Score=hp-left+Math.Min(hp*2,candidate.Engine.State.Focus*ratio)*carry+Math.Min(hp,future)*.12-candidate.Cost*.001;
-                next.Add(candidate);
-                if(best==null || candidate.Score>best.Score)best=candidate;
-            }
-            beam=next.OrderByDescending(p=>p.Score).Take(70).ToList();
-            if(beam.Count==0)break;
-        }
-        return best?.Cards??new List<int>();
-    }
-    static double Quality(RunEngine e,int id)
-    {
-        var d=CardCatalog.All[id];
-        double value=d.Effect switch {
-            CardEffect.MultiplyFocus=>100, CardEffect.Focus=>65+d.Power*.25,
-            CardEffect.Amplify=>65, CardEffect.Mark=>35, CardEffect.Echo=>65,
-            CardEffect.Forge=>25, CardEffect.Rhythm=>30,
-            _=>d.Iai?40+d.Rarity*12:15+d.Rarity*8
-        };
-        if(e.State.Cards.Any(c=>c.Definition==id && c.Stars<4)) value+=35;
-        if(d.Effect==CardEffect.MultiplyFocus && e.State.Cards.Count(c=>c.Data.Effect==CardEffect.MultiplyFocus)>=2)value-=50;
-        return value;
-    }
-    public static void Run()
-    {
-        string folder=System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(),"Tests","Results");
-        System.IO.Directory.CreateDirectory(folder);
-        var options=new System.Text.Json.JsonSerializerOptions{IncludeFields=true,IgnoreReadOnlyProperties=true,WriteIndented=true};
-        for(int seed=1;seed<=3;seed++)
-        {
-            var e=RunEngine.New(seed); int actions=0;
-            while(actions++<400 && e.State.Phase!=RunPhase.Victory && e.State.Phase!=RunPhase.Defeat)
-            {
-                switch(e.State.Phase)
+                var state=game.State;
+                switch(state.Phase)
                 {
                     case RunPhase.Battle:
-                        if(e.State.Ultimate>=100)e.Ultimate();
-                        var plan=Search(e);
-                        e.State.Sequence=Enumerable.Repeat(-1,6).ToArray();
-                        for(int i=0;i<plan.Count;i++)e.Equip(plan[i],i);
-                        if(!e.CanExecute)throw new Exception("Campaign found no legal turn.");
-                        if(seed==1 && e.State.Floor==3 && e.IsBoss)
-                            System.IO.File.WriteAllText(System.IO.Path.Combine(folder,"FinalBoss.json"),System.Text.Json.JsonSerializer.Serialize(e.State,options));
-                        var turn=new TurnContext();
-                        foreach(int uid in e.State.Sequence) {var card=e.State.Find(uid);if(card!=null)e.Resolve(card,turn);if(e.Cleared)break;}
-                        e.EndTurn(); break;
-                    case RunPhase.CardReward:
-                        e.MergeAll();
-                        if(e.State.Cards.Count>=16)
+                        string encounter=$"{state.Floor}:{state.Node}:{state.Wave}";
+                        Check(visited.Add(encounter),"Each battle is entered only once: "+encounter);
+                        Check(state.Enemies.Count>=2 && state.Enemies.All(enemy=>enemy.Health>0 && enemy.MaxHealth>=enemy.Health),"Encounter spawns live enemies with valid HP.");
+                        int goldBefore=state.Gold, ownedBefore=state.Cards.Count, itemsBefore=state.Items.Sum();
+                        bool final=state.Floor==3 && game.IsBoss;
+                        state.Enemies.ForEach(enemy=>enemy.Health=0);
+                        game.EndTurn(); battles++;
+                        if(final)
                         {
-                            var worst=e.State.Cards.OrderBy(c=>Quality(e,c.Definition)*Math.Pow(2,c.Stars-1)).First();
-                            e.Sell(worst.Uid);
+                            Check(state.Phase==RunPhase.Victory,"Final boss goes directly to the clear screen.");
+                            Check(state.Gold==goldBefore && state.Cards.Count==ownedBefore && state.Items.Sum()==itemsBefore,"Final clear grants no gold, card or item rewards.");
+                            Check(!game.ChooseCard(0),"The final clear does not accept a card reward.");
+                            game.ChooseItem(0);
+                            Check(state.Phase==RunPhase.Victory && state.Items.Sum()==itemsBefore,"The final clear does not accept an item reward.");
                         }
-                        int choice=Enumerable.Range(0,3).OrderByDescending(i=>Quality(e,e.State.Offers[i])).First();
-                        e.ChooseCard(choice);e.MergeAll();break;
+                        else
+                        {
+                            Check(state.Phase==RunPhase.CardReward,"A nonfinal victory opens its wave reward.");
+                            Check(state.Offers.Distinct().Count()==3 && state.Offers.All(id=>id>=0 && id<CardCatalog.All.Length && id!=29),"Wave rewards offer three distinct legal nonultimate cards.");
+                        }
+                        break;
+                    case RunPhase.CardReward:
+                        Check(game.ChooseCard(-1),"Wave gold option advances progression."); cardRewards++;
+                        break;
                     case RunPhase.ItemReward:
-                        int[] priority={0,3,1,2,4,5};
-                        int item=Enumerable.Range(0,3).OrderBy(i=>Array.IndexOf(priority,e.State.Offers[i])).First();
-                        e.ChooseItem(item);break;
+                        int previous=state.Items.Sum(); game.ChooseItem(0); itemRewards++;
+                        Check(state.Items.Sum()==previous+1,"A stage item reward grants exactly one item.");
+                        break;
                     case RunPhase.Shop:
-                        if(seed==1 && e.State.Floor==1)
-                            System.IO.File.WriteAllText(System.IO.Path.Combine(folder,"Shop.json"),System.Text.Json.JsonSerializer.Serialize(e.State,options));
-                        var focus=e.State.Cards.Where(c=>c.Stars<4).OrderByDescending(c=>Quality(e,c.Definition)*Math.Pow(1.7,c.Stars)).FirstOrDefault();
-                        if(focus!=null)e.BuyUpgrade(focus.Uid);
-                        foreach(int buy in Enumerable.Range(0,3).OrderByDescending(i=>Quality(e,e.State.Offers[i])))if(e.State.Cards.Count<16)e.Buy(buy);
-                        e.MergeAll();e.LeaveShop();break;
+                        Check(state.Offers.Any(id=>CardCatalog.All[id].Rarity>=2),"Each shop offers at least one gold-or-better card.");
+                        int price=game.RerollPrice, gold=state.Gold;
+                        Check(game.RerollShop() && state.Gold==gold-price && state.ShopRerolls==1,"Shop reroll spends its advertised price once.");
+                        int buy=Enumerable.Range(0,3).First(i=>game.ShopPrice(i)<=state.Gold);
+                        gold=state.Gold;
+                        Check(game.Buy(buy) && state.Gold<gold && !game.Buy(buy),"Shop purchase spends gold and cannot repeat for the same offer.");
+                        game.LeaveShop(); shops++;
+                        break;
+                    default: throw new Exception("Unexpected campaign phase: "+state.Phase);
                 }
             }
-            Console.WriteLine($"Campaign seed {seed}: {e.State.Phase}, waves={e.State.WavesCleared}, turns={e.State.TurnsPlayed}, best hit={e.State.BestHit:N0}");
-            if(e.State.Phase!=RunPhase.Victory)throw new Exception($"Campaign seed {seed} was not completable by the legal-card policy. Floor {e.State.Floor}, node {e.State.Node}, wave {e.State.Wave}.");
-            if(seed==1)System.IO.File.WriteAllText(System.IO.Path.Combine(folder,"Victory.json"),System.Text.Json.JsonSerializer.Serialize(e.State,options));
+            Check(game.State.Phase==RunPhase.Victory && battles==30,"Campaign has exactly 30 battles and reaches Victory.");
+            Check(shops==3 && cardRewards==29 && itemRewards==11,"Campaign has three shops, 29 wave card rewards and 11 item rewards; no final-clear rewards.");
+            Check(game.State.WavesCleared==30 && game.State.Items.Sum()==11,"Persistent campaign statistics match rewarded progress.");
+            var options=new JsonSerializerOptions{IncludeFields=true,IgnoreReadOnlyProperties=true};
+            var json=JsonSerializer.Serialize(game.State,options);
+            var saved=JsonSerializer.Deserialize<RunState>(json,options)??throw new Exception("Save round trip returned null.");
+            var resumed=new RunEngine(saved);
+            Check(resumed.State.Phase==RunPhase.Victory && resumed.State.WavesCleared==30 && resumed.State.Items.Sum()==11,"A completed campaign survives a save-data round trip.");
+            Console.WriteLine($"Campaign seed {seed}: {battles} battles, {cardRewards} card rewards, {itemRewards} item rewards, {shops} shops.");
         }
+        return checks;
     }
 }

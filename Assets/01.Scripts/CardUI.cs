@@ -28,6 +28,7 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
     Text backName, backDescription;
     Text slotBonusLabel;
     static readonly System.Collections.Generic.Dictionary<Sprite,Rect> artBounds=new System.Collections.Generic.Dictionary<Sprite,Rect>();
+    static string L(string text,params object[] args) => GameLocalization.Text(text,args);
     T Find<T>(string child) where T:Component
     {
         foreach(var t in GetComponentsInChildren<Transform>(true)) if(t.name==child) return t.GetComponent<T>();
@@ -54,9 +55,15 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
         GetComponent<Image>().raycastTarget=true;
         SetText("NameText",d.Name); SetText("DescriptionText",d.Description(card.Stars));
         var oldCost=Find<RectTransform>("CostBadge"); if(oldCost!=null) oldCost.gameObject.SetActive(false);
-        SetText("FamilyText",d.Iai?"거합":"공통"); SetText("TypeText",d.KindName);
-        var desc=Find<Text>("DescriptionText"); if(desc!=null) { desc.verticalOverflow=VerticalWrapMode.Truncate; desc.lineSpacing=1.1f; desc.resizeTextForBestFit=true; desc.resizeTextMinSize=20; desc.resizeTextMaxSize=24; }
-        var nameText=Find<Text>("NameText"); if(nameText!=null) { nameText.resizeTextForBestFit=true; nameText.resizeTextMinSize=18; nameText.resizeTextMaxSize=24; }
+        SetText("FamilyText",L(d.Iai?"거합":"공통")); SetText("TypeText",d.KindName);
+        var desc=Find<Text>("DescriptionText"); if(desc!=null) { desc.verticalOverflow=VerticalWrapMode.Truncate; desc.lineSpacing=1.1f; desc.resizeTextForBestFit=true; desc.resizeTextMinSize=18; desc.resizeTextMaxSize=24; }
+        var nameText=Find<Text>("NameText"); if(nameText!=null) { nameText.horizontalOverflow=HorizontalWrapMode.Wrap; nameText.verticalOverflow=VerticalWrapMode.Truncate; nameText.resizeTextForBestFit=true; nameText.resizeTextMinSize=16; nameText.resizeTextMaxSize=24; }
+        foreach(string part in new[]{"FamilyText","TypeText"})
+        {
+            var label=Find<Text>(part); if(label==null)continue;
+            label.horizontalOverflow=HorizontalWrapMode.Wrap; label.verticalOverflow=VerticalWrapMode.Truncate;
+            label.resizeTextForBestFit=true; label.resizeTextMinSize=14; label.resizeTextMaxSize=18;
+        }
         artwork=Find<Image>("Artwork"); artwork.sprite=ui.Art(d); artwork.preserveAspect=true; artwork.color=Color.white;
         LayoutCard(compact);
         PrepareBack(); RefreshFace();
@@ -117,11 +124,13 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
             stateBackground=go.GetComponent<Image>(); stateBackground.color=new Color(.07f,.04f,.10f,.92f); stateBackground.raycastTarget=false;
             var label=new GameObject("Label",typeof(RectTransform),typeof(Text)); label.transform.SetParent(go.transform,false);
             stateText=label.GetComponent<Text>(); stateText.font=ui.Assets.HeadingFont; stateText.alignment=TextAnchor.MiddleCenter; stateText.color=GameTypography.Paper; stateText.raycastTarget=false;
-            var textRect=stateText.rectTransform; textRect.anchorMin=Vector2.zero; textRect.anchorMax=Vector2.one; textRect.offsetMin=new Vector2(4,4); textRect.offsetMax=new Vector2(-4,-4);
+            var textRect=stateText.rectTransform; textRect.anchorMin=Vector2.zero; textRect.anchorMax=Vector2.one; textRect.offsetMin=new Vector2(10,6); textRect.offsetMax=new Vector2(-10,-6);
+            stateText.resizeTextForBestFit=true; stateText.resizeTextMinSize=14;
+            stateText.horizontalOverflow=HorizontalWrapMode.Wrap; stateText.verticalOverflow=VerticalWrapMode.Truncate;
             go.SetActive(false);
         }
         Box("CardState",compact?10:18,compact?-128:-318,compact?204:252,compact?46:62);
-        stateText.fontSize=compact?18:24;
+        stateText.fontSize=compact?18:24; stateText.resizeTextMaxSize=stateText.fontSize;
     }
     void PrepareBack()
     {
@@ -135,6 +144,8 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
         cardBack.color=new[]{new Color(.93f,.9f,.85f),new Color(.83f,.93f,.98f),new Color(.98f,.9f,.7f),new Color(.92f,.85f,.98f)}[Card.Data.Rarity];
         backName.text=Card.Data.Name; backDescription.text=Card.Data.Description(Card.Stars);
         backName.color=backDescription.color=DescriptionColor(Card.Data.Rarity);
+        backName.resizeTextMinSize=14; backName.resizeTextMaxSize=20;
+        backDescription.resizeTextMinSize=14; backDescription.resizeTextMaxSize=18;
         Box("BackName",8,-4,BagWidth-56,26);
         Box("BackDescription",8,-35,BagWidth-56,BagHeight-84);
     }
@@ -170,7 +181,7 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
         if(slotBonusLabel==null)return;
         bool active=Card.Data.IsSlotBonusActive(Slot) && !sealedCard && ui.Manager.Run!=null && Slot!=ui.Manager.Run.State.SealedSlot && !ui.Manager.Run.IsCardSealed(Card.Uid);
         double bonus=active?ui.Manager.Run.SlotScale(Card.Data,Slot)-1:Card.Data.SlotBonus-1;
-        slotBonusLabel.text=Card.Data.BonusSlot+"번 칸"+(active?"  +"+(bonus*100).ToString("0")+"%":" 보너스");
+        slotBonusLabel.text=active?L("{0}번 칸  +{1}%",Card.Data.BonusSlot,(bonus*100).ToString("0")):L("{0}번 칸 보너스",Card.Data.BonusSlot);
         slotBonusLabel.color=active?new Color(.65f,1,.65f):new Color(.95f,.9f,.78f);
         Box("SlotBonusLabel",compactView?16:22,compactView?-14:-144,compactView?88:244,24);
         slotBonusLabel.gameObject.SetActive(Card.Data.HasSlotBonus && !compactView);
@@ -190,7 +201,7 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
     }
     public void SetSealed(bool value,string reason="이번 턴 봉인")
     {
-        sealedCard=value; sealedReason=reason; group.alpha=value?.58f:1;
+        sealedCard=value; sealedReason=L(reason); group.alpha=value?.58f:1;
         stateText.text=value?sealedReason:""; stateBackground.gameObject.SetActive(value);
         RefreshSlotBonus();
         if(value)stateBackground.transform.SetAsLastSibling();
@@ -204,7 +215,7 @@ public class CardUI : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, 
         var starHolder=Find<RectTransform>("Stars"); if(starHolder!=null) starHolder.gameObject.SetActive(active || !(compactView && showingBack));
         artwork.color=active?new Color(.12f,.08f,.16f):Color.white;
         for(int i=1;i<=4;i++) { var star=Find<Image>("Star"+i); if(star!=null) star.gameObject.SetActive(i<=(active?stars:Card.Stars)); }
-        stateText.text=active?"합성 → "+stars+"성":sealedCard?sealedReason:"";
+        stateText.text=active?L("합성 → {0}성",stars):sealedCard?sealedReason:"";
         stateBackground.gameObject.SetActive(active || sealedCard);
         if(active) stateBackground.transform.SetAsLastSibling();
     }

@@ -3,7 +3,8 @@ using System;
 public sealed class EnemyDefinition
 {
     public int Id, Body;
-    public string Name;
+    string sourceName;
+    public string Name { get => CatalogText.Name(sourceName); set => sourceName=value; }
     public double Health;
     public bool Floating;
     public float[] Tint;

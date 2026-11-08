@@ -11,7 +11,8 @@ public sealed class CardDefinition
     public int BonusSlot;
     public double SlotBonus=1;
     public double Chance, ChanceGrowth=.05, LuckyScale=1, UnluckyScale=1;
-    public string Name;
+    string sourceName;
+    public string Name { get => CatalogText.Name(sourceName); set => sourceName=value; }
     public bool Iai, Consume;
     public CardTarget Target;
     public bool Finisher, PierceGuard, ForgeFinisher;
@@ -22,7 +23,7 @@ public sealed class CardDefinition
     public bool IsSurvival => Effect==CardEffect.Delay;
     public bool IsChance => Chance>0;
     public double ChanceAt(int stars) => Math.Min(.95,Chance+ChanceGrowth*(stars-1));
-    public string KindName => IsAttack?"공격":IsSurvival?"생존":"서포트";
+    public string KindName => IsAttack?CatalogText.Text("공격","Attack"):IsSurvival?CatalogText.Text("생존","Survival"):CatalogText.Text("서포트","Support");
     public double Value(int stars)
     {
         if(Effect==CardEffect.Delay) return stars>=3?2:1;
@@ -39,37 +40,37 @@ public sealed class CardDefinition
     public string Description(int stars)
     {
         string text=BaseDescription(stars);
-        if(IsAttack && IsChance)text+="\n성공 "+(ChanceAt(stars)*100).ToString("0")+"% ×"+LuckyScale.ToString("0.##")+" / 실패 ×"+UnluckyScale.ToString("0.##")+".";
-        if(HasSlotBonus)text+="\n["+BonusSlot+"번 칸] "+(IsAttack?"피해":"효과")+" +"+((SlotBonus-1)*100).ToString("0")+"%.";
+        if(IsAttack && IsChance)text+=CatalogText.Text("\n성공 {0:0}% ×{1:0.##} / 실패 ×{2:0.##}.","\n{0:0}%: ×{1:0.##}; otherwise ×{2:0.##}.",ChanceAt(stars)*100,LuckyScale,UnluckyScale);
+        if(HasSlotBonus)text+=CatalogText.Text("\n[{0}번 칸] {1} +{2:0}%.","\n[Slot {0}] {1} +{2:0}%.",BonusSlot,IsAttack?CatalogText.Text("피해","damage"):CatalogText.Text("효과","effect"),(SlotBonus-1)*100);
         return text;
     }
-    public string TargetName => Target==CardTarget.Two?"적 2명":Target==CardTarget.Rearmost?"맨 뒤 적":"적 1명";
+    public string TargetName => Target==CardTarget.Two?CatalogText.Text("적 2명","2 enemies"):Target==CardTarget.Rearmost?CatalogText.Text("맨 뒤 적","the rearmost enemy"):CatalogText.Text("적 1명","1 enemy");
     string BaseDescription(int stars)
     {
         string v=GameMath.Number(Value(stars));
         switch(Effect)
         {
-            case CardEffect.Focus: return "집중 +"+v+".";
-            case CardEffect.MultiplyFocus: return "집중 ×"+(1+Value(stars)/100).ToString("0.##")+" (중첩 불가).";
-            case CardEffect.Amplify: return "이번 턴 피해 +"+Value(stars).ToString("0.##")+"%.";
-            case CardEffect.MultiplyDamage: return "이번 턴 피해 ×"+(1+Value(stars)/100).ToString("0.##")+" (중첩 불가).";
-            case CardEffect.Forge: return "이번 턴 타격 피해 +"+v+".";
-            case CardEffect.Mark: return "다음 공격 ×"+(1+Value(stars)/100).ToString("0.##")+".";
-            case CardEffect.Echo: return "다음 공격 "+Repeats(stars)+"회 추가 ("+(RepeatPower(stars)*100).ToString("0")+"%).";
-            case CardEffect.Fortune: return "다음 공격 "+(ChanceAt(stars)*100).ToString("0")+"% 확률로 ×"+(1+Value(stars)/100).ToString("0.##")+".";
-            case CardEffect.Gamble: return "이번 턴 "+(ChanceAt(stars)*100).ToString("0")+"% 확률로 ×"+(1+Value(stars)/100).ToString("0.##")+".\n실패 ×"+UnluckyScale.ToString("0.##")+" · 턴당 1회.";
-            case CardEffect.ChanceEcho: return "집중 +"+(20*stars)+".\n"+(ChanceAt(stars)*100).ToString("0")+"% 확률로 다음 공격 1회 추가.";
-            case CardEffect.Rhythm: return "앞선 카드당 집중 +"+v+".";
-            case CardEffect.Delay: return "남은 턴 +"+v+" (최대 +2).\n집중 +"+(20*stars)+".";
+            case CardEffect.Focus: return CatalogText.Text("집중 +{0}.","Focus +{0}.",v);
+            case CardEffect.MultiplyFocus: return CatalogText.Text("집중 ×{0:0.##} (동일 카드 중첩 불가).","Focus ×{0:0.##} (matching copies do not stack).",1+Value(stars)/100);
+            case CardEffect.Amplify: return CatalogText.Text("이번 턴 피해 +{0:0.##}%.","Damage +{0:0.##}% this turn.",Value(stars));
+            case CardEffect.MultiplyDamage: return CatalogText.Text("이번 턴 피해 ×{0:0.##} (동일 카드 중첩 불가).","Damage ×{0:0.##} this turn (matching copies do not stack).",1+Value(stars)/100);
+            case CardEffect.Forge: return CatalogText.Text("이번 턴 타격 피해 +{0}.","Damage per hit +{0} this turn.",v);
+            case CardEffect.Mark: return CatalogText.Text("다음 공격 ×{0:0.##}.","Next attack ×{0:0.##}.",1+Value(stars)/100);
+            case CardEffect.Echo: return CatalogText.Text("다음 공격 {0}회 추가 ({1:0}%).","Repeat next attack {0} time(s) at {1:0}% damage.",Repeats(stars),RepeatPower(stars)*100);
+            case CardEffect.Fortune: return CatalogText.Text("다음 공격 {0:0}% 확률로 ×{1:0.##}.","Next attack: {0:0}% chance of ×{1:0.##}.",ChanceAt(stars)*100,1+Value(stars)/100);
+            case CardEffect.Gamble: return CatalogText.Text("이번 턴 {0:0}% 확률로 ×{1:0.##}.\n실패 ×{2:0.##} · 턴당 1회.","{0:0}%: damage ×{1:0.##} this turn.\nOtherwise ×{2:0.##}. Once per turn.",ChanceAt(stars)*100,1+Value(stars)/100,UnluckyScale);
+            case CardEffect.ChanceEcho: return CatalogText.Text("집중 +{0}.\n{1:0}% 확률로 다음 공격 1회 추가.","Focus +{0}.\n{1:0}% chance to repeat the next attack.",20*stars,ChanceAt(stars)*100);
+            case CardEffect.Rhythm: return CatalogText.Text("앞선 카드당 집중 +{0}.","Focus +{0} per preceding card.",v);
+            case CardEffect.Delay: return CatalogText.Text("남은 턴 +{0} (최대 +2).\n집중 +{1}.","Turns +{0} (max +2).\nFocus +{1}.",v,20*stars);
             default:
-                string text=TargetName+"에게 "+v+(Hits>1?" ×"+Hits:"")+" 피해.";
-                if(FocusRatio>0)text+="\n집중 ×"+Ratio(stars).ToString("0.##")+
-                    (Effect==CardEffect.Ultimate || Consume?(FocusRetention>0?" 추가·절반 보존.":" 추가·모두 소모."):" 추가·소모 없음.");
-                if(FocusGain>0)text+="\n집중 +"+GameMath.Number(FocusGain*Value(stars)/Power)+".";
-                if(Finisher)text+="\n체력 절반 이하에게 ×2.";
-                if(PierceGuard)text+="\n경화 무시.";
-                if(ForgeFinisher)text+="\n재련 효과 ×"+ForgeScale(stars).ToString("0")+".";
-                if(Effect==CardEffect.Ultimate)text+="\n이번 턴 한정.";
+                string text=CatalogText.Text("{0}에게 {1}{2} 피해.","Deal {1}{2} damage to {0}.",TargetName,v,Hits>1?" ×"+Hits:"");
+                if(FocusRatio>0)text+=CatalogText.Text("\n집중 ×{0:0.##}","\nAdd Focus ×{0:0.##}",Ratio(stars))+
+                    (Effect==CardEffect.Ultimate || Consume?(FocusRetention>0?CatalogText.Text(" 추가·절반 보존.","; keep half."):CatalogText.Text(" 추가·모두 소모.","; consume all.")):CatalogText.Text(" 추가·소모 없음.","; keep Focus."));
+                if(FocusGain>0)text+=CatalogText.Text("\n집중 +{0}.","\nFocus +{0}.",GameMath.Number(FocusGain*Value(stars)/Power));
+                if(Finisher)text+=CatalogText.Text("\n체력 절반 이하에게 ×2.","\n×2 against enemies at half HP or less.");
+                if(PierceGuard)text+=CatalogText.Text("\n경화 무시.","\nIgnore Guard.");
+                if(ForgeFinisher)text+=CatalogText.Text("\n재련 효과 ×{0:0}.","\nForge effect ×{0:0}.",ForgeScale(stars));
+                if(Effect==CardEffect.Ultimate)text+=CatalogText.Text("\n이번 턴 한정.","\nExpires this turn.");
                 return text;
         }
     }
@@ -144,6 +145,14 @@ public static class GameMath
     public static long Damage(double n) => (long)Math.Ceiling(Clamp(n));
     public static string Number(double n)
     {
+        if(GameLocalization.IsEnglish)
+        {
+            var culture=System.Globalization.CultureInfo.InvariantCulture;
+            if(n>=1000000000)return (n/1000000000d).ToString("0.##",culture)+"B";
+            if(n>=1000000)return (n/1000000d).ToString("0.##",culture)+"M";
+            if(n>=1000)return (n/1000d).ToString("0.##",culture)+"K";
+            return Math.Floor(n).ToString("N0",culture);
+        }
         if (n >= 100000000) return (n/100000000d).ToString("0.##") + "억";
         if (n >= 10000) return (n/10000d).ToString("0.##") + "만";
         return Math.Floor(n).ToString("N0");
