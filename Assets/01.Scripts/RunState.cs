@@ -31,13 +31,14 @@ public class EnemyState
 [Serializable]
 public class RunState
 {
-    public int Version=3, Seed, RandomState, NextUid=1;
+    public int Version=5, Seed, RandomState, NextUid=1;
     public int Floor=1, Node, Wave, Turn=1, Gold=50, Ultimate, Target;
     public int WavesCleared, TurnsPlayed, CardsPlayed;
     public double Focus, TotalDamage, BestHit;
     public RunPhase Phase;
     public List<OwnedCard> Cards = new List<OwnedCard>();
     public int[] Sequence = { -1,-1,-1,-1,-1,-1 };
+    public int[] BagSlots = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
     public int[] Items = new int[ItemCatalog.Count];
     public List<EnemyState> Enemies = new List<EnemyState>();
     public int[] Offers = new int[3];

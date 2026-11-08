@@ -88,7 +88,7 @@ static class Planner
                 foreach(var atk in s.Cards.Where(a=>a.Data.IsAttack && !game.IsCardSealed(a.Uid) && !candidate.Cards.Contains(a.Uid)))
                 {
                     double amount=(atk.Data.Value(atk.Stars)+candidate.Context.Flat*atk.Data.ForgeScale(atk.Stars)+candidate.Engine.State.Focus*atk.Data.Ratio(atk.Stars))*mult*atk.Data.Hits*(1+candidate.Context.Echo*candidate.Context.EchoPower);
-                    future=Math.Max(future,amount*(atk.Data.All?candidate.Engine.State.Enemies.Count(e=>e.Health>0):1));
+                    future=Math.Max(future,amount*candidate.Engine.TargetsFor(atk.Data).Length);
                 }
                 double survival=(candidate.Engine.State.BonusTurns-s.BonusTurns)*hp/(Math.Max(1,game.TurnLimit-s.Turn+1))* .65;
                 candidate.Score=hp-left+Math.Min(hp,future)*.12+survival+candidate.Engine.State.Enemies.Count(e=>e.Health==0)*hp*.04;

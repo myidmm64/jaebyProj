@@ -91,7 +91,7 @@ public class GameManager : MonoSingleton<GameManager>
         if(!Run.Cleared && Run.State.Turn<Run.TurnLimit) yield return CurrentStage.AnimateEnemyIntents(Speed);
         Run.EndTurn(); Busy=false; UI.EndCombat();
         if(Run.State.Phase==RunPhase.Defeat) Audio.Play(GameSound.Lose);
-        if(Run.State.Phase==RunPhase.CardReward) Audio.Play(GameSound.Win);
+        if(Run.State.Phase==RunPhase.CardReward || Run.State.Phase==RunPhase.Victory) Audio.Play(GameSound.Win);
         Commit();
     }
     public void ChooseCard(int index)

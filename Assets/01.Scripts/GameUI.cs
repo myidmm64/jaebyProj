@@ -32,6 +32,7 @@ public class GameUI : MonoBehaviour
     Button execute, ultimate;
     GameObject overlay;
     GameObject buffTooltip;
+    Transform tooltipAnchor;
     string overlayKind;
     int selected=-1, page;
     int debugDefinition, debugStars=1;
@@ -88,6 +89,7 @@ public class GameUI : MonoBehaviour
         var speed=MakeButton(rightHud,"SpeedButton",244,-76,108,44,"×2",Manager.SetSpeed,18);
         speedText=speed.GetComponentInChildren<Text>();
         MakeButton(rightHud,"DebugCardsButton",0,-76,232,44,"F2 카드 추가",ShowDebugCards,18);
+        MakeButton(rightHud,"DebugClearButton",-152,-76,140,44,"클리어 UI",ShowClearPreview,18);
         damageText=Label(rightHud,"RunDamage",0,-132,352,36,"누적 피해 0",18,Cream); Outline(damageText);
         interferenceText=Label(rightHud,"Interference",0,-178,352,60,"",18,new Color(1,.71f,.57f)); Outline(interferenceText);
         execute=C<Button>("ExecuteButton"); Hook("ExecuteButton",Manager.Execute);
@@ -117,7 +119,7 @@ public class GameUI : MonoBehaviour
         focusText.resizeTextForBestFit=true; focusText.resizeTextMinSize=12; focusText.resizeTextMaxSize=18;
         var hover=focusBuff.gameObject.AddComponent<EventTrigger>();
         var enter=new EventTrigger.Entry{eventID=EventTriggerType.PointerEnter}; enter.callback.AddListener(_=>ShowFocusTooltip()); hover.triggers.Add(enter);
-        var exit=new EventTrigger.Entry{eventID=EventTriggerType.PointerExit}; exit.callback.AddListener(_=>HideBuffTooltip()); hover.triggers.Add(exit);
+        var exit=new EventTrigger.Entry{eventID=EventTriggerType.PointerExit}; exit.callback.AddListener(_=>HideBuffTooltip(focusBuff)); hover.triggers.Add(exit);
         var toastBackground=Picture(CanvasTransform,"ToastBackground",0,0,800,76,null);
         toastBackground.color=new Color(.06f,.04f,.08f,.94f);
         var toastShadow=toastBackground.gameObject.AddComponent<Shadow>(); toastShadow.effectColor=new Color(0,0,0,.75f); toastShadow.effectDistance=new Vector2(0,-6);
@@ -158,22 +160,21 @@ public class GameUI : MonoBehaviour
     void ShowFocusTooltip()
     {
         if(ModalOpen || Manager.InMenu || Manager.Run==null) return;
-        HideBuffTooltip();
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(CanvasTransform,RectTransformUtility.WorldToScreenPoint(null,focusBuff.position),null,out var point);
-        var rect=StatusPanel(CanvasTransform,"BuffTooltip",0,0,380,196); buffTooltip=rect.gameObject;
-        rect.anchorMin=rect.anchorMax=new Vector2(.5f,.5f); rect.pivot=new Vector2(0,1);
-        rect.anchoredPosition=new Vector2(Mathf.Clamp(point.x+80,-CanvasTransform.rect.width/2+20,CanvasTransform.rect.width/2-400),Mathf.Clamp(point.y+20,-CanvasTransform.rect.height/2+216,CanvasTransform.rect.height/2-20));
-        Label(rect,"Title",26,-20,328,36,"집중 · 캐릭터 특수 버프",24,Mint);
-        Label(rect,"Description",26,-68,328,104,"현재 "+GameMath.Number(Manager.Run.State.Focus)+"중첩\n턴 종료 시 모두 사라집니다.\n거합의 피해를 강화하며, 카드마다 소모량이 다릅니다.",18,Cream,TextAnchor.UpperLeft);
+        ShowTooltip(focusBuff,"집중","현재 "+GameMath.Number(Manager.Run.State.Focus)+"\n턴 종료 시 사라집니다.\n거합의 피해를 강화합니다.");
     }
-    void HideBuffTooltip() { if(buffTooltip!=null) Destroy(buffTooltip); buffTooltip=null; }
+    void HideBuffTooltip(Transform owner=null)
+    {
+        if(!object.ReferenceEquals(owner,null) && !object.ReferenceEquals(owner,tooltipAnchor))return;
+        if(buffTooltip!=null) { buffTooltip.SetActive(false); Destroy(buffTooltip); }
+        buffTooltip=null; tooltipAnchor=null;
+    }
     void AttachTooltip(Transform anchor,Func<string> title,Func<string> description)
     {
         var hit=anchor.GetComponent<Graphic>(); if(hit!=null) hit.raycastTarget=true;
         var trigger=anchor.gameObject.AddComponent<EventTrigger>();
         var enter=new EventTrigger.Entry{eventID=EventTriggerType.PointerEnter};
         enter.callback.AddListener(_=>ShowTooltip(anchor,title(),description())); trigger.triggers.Add(enter);
-        var exit=new EventTrigger.Entry{eventID=EventTriggerType.PointerExit}; exit.callback.AddListener(_=>HideBuffTooltip()); trigger.triggers.Add(exit);
+        var exit=new EventTrigger.Entry{eventID=EventTriggerType.PointerExit}; exit.callback.AddListener(_=>HideBuffTooltip(anchor)); trigger.triggers.Add(exit);
         var scroll=anchor.GetComponentInParent<ScrollRect>();
         if(scroll!=null)
         {
@@ -187,12 +188,20 @@ public class GameUI : MonoBehaviour
     {
         if(ModalOpen || Manager.InMenu) return;
         HideBuffTooltip();
+        tooltipAnchor=anchor;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(CanvasTransform,RectTransformUtility.WorldToScreenPoint(null,anchor.position),null,out var point);
-        var box=StatusPanel(CanvasTransform,"HoverTooltip",0,0,390,204); buffTooltip=box.gameObject;
+        float width=Mathf.Min(430,CanvasTransform.rect.width-32);
+        var box=StatusPanel(CanvasTransform,"HoverTooltip",0,0,width,160); buffTooltip=box.gameObject;
+        var group=box.gameObject.AddComponent<CanvasGroup>(); group.blocksRaycasts=false;
         box.anchorMin=box.anchorMax=new Vector2(.5f,.5f); box.pivot=new Vector2(0,1);
-        box.anchoredPosition=new Vector2(Mathf.Clamp(point.x+28,-CanvasTransform.rect.width/2+16,CanvasTransform.rect.width/2-406),Mathf.Clamp(point.y-38,-CanvasTransform.rect.height/2+220,CanvasTransform.rect.height/2-16));
-        Label(box,"Title",24,-18,342,36,title,24,Mint);
-        Label(box,"Description",24,-66,342,116,description,18,Cream,TextAnchor.UpperLeft);
+        var heading=Label(box,"Title",24,-18,width-48,36,title,24,Mint,TextAnchor.UpperLeft);
+        float titleHeight=Mathf.Max(32,heading.preferredHeight); heading.rectTransform.sizeDelta=new Vector2(width-48,titleHeight);
+        var body=Label(box,"Description",24,-(30+titleHeight),width-48,100,description,18,Cream,TextAnchor.UpperLeft);
+        float bodyHeight=Mathf.Max(32,body.preferredHeight); body.rectTransform.sizeDelta=new Vector2(width-48,bodyHeight);
+        float height=titleHeight+bodyHeight+52; box.sizeDelta=new Vector2(width,height);
+        float left=point.x+28;
+        if(left+width>CanvasTransform.rect.width/2-16)left=point.x-width-16;
+        box.anchoredPosition=new Vector2(Mathf.Clamp(left,-CanvasTransform.rect.width/2+16,CanvasTransform.rect.width/2-width-16),Mathf.Clamp(point.y-24,-CanvasTransform.rect.height/2+height+16,CanvasTransform.rect.height/2-16));
     }
     void PreparePanels()
     {
@@ -282,18 +291,18 @@ public class GameUI : MonoBehaviour
         if(RunSave.LastError!=null) Toast(RunSave.LastError);
     }
     List<OwnedCard> Ordered() => Manager.Run.BagCards;
-    int BagPageCount => Math.Max(1,(Ordered().Count+BagColumns-1)/BagColumns);
+    int BagPageCount => Math.Max(1,(Manager.Run.BagCount+BagColumns-1)/BagColumns);
     void RefreshBagCount() { Put("BagCount",Manager.Run.BagCount+"/"+RunEngine.BagCapacity,header); }
     void RefreshCards()
     {
-        var s=Manager.Run.State; var ordered=Ordered();
+        var s=Manager.Run.State;
         if(flipState!=s) { flipState=s; flippedBagCards.Clear(); }
         flippedBagCards.RemoveWhere(uid=>s.Find(uid)==null);
         page=Mathf.Clamp(page,0,BagPageCount-1);
         var visible=new HashSet<int>();
         for(int i=0;i<BagColumns;i++)
         {
-            var c=ordered.Skip(page*BagColumns+i).FirstOrDefault();
+            var c=Manager.Run.BagCardAt(page*BagColumns+i);
             bagCards[i]=c==null?null:CardView(c,bag,-1,true); if(c!=null) visible.Add(c.Uid);
         }
         for(int i=0;i<6;i++)
@@ -358,28 +367,29 @@ public class GameUI : MonoBehaviour
             RectTransformUtility.ScreenPointToLocalPointInRectangle(CanvasTransform,Camera.main.WorldToScreenPoint(Manager.CurrentStage.BuffPosition(i)),null,out var buffPoint);
             iconRect.anchoredPosition=buffPoint;
             enemyIntentIcons.Add(i,iconRect);
-            AttachTooltip(iconRect,()=>"다음 행동 · "+RunEngine.IntentName(s.Enemies[index]),()=>
-                (s.Enemies[index].Rear?"후열: 앞줄 경화 시 단일 피해 -20%.\n":"")+
-                (s.Enemies[index].Guarding?"현재 경화: 받는 피해 -50%\n":"")+RunEngine.IntentDescription(s.Enemies[index]));
-            if(state.Guarding) intent.color=new Color(.56f,.86f,1);
+            AttachTooltip(iconRect,()=>RunEngine.IntentName(s.Enemies[index]),()=>RunEngine.IntentDescription(s.Enemies[index]));
+            if(state.Intent==EnemyIntent.Guard || state.Intent==EnemyIntent.Fortify) intent.color=new Color(.56f,.86f,1);
             targetButtons.Add(intent.gameObject);
-            if(state.Barrier>0)EnemyStatusIcon(i,buffPoint+new Vector2(42,0),Assets.Buff,"보호막",()=>"남은 보호막 "+GameMath.Number(s.Enemies[index].Barrier)+"\n체력보다 먼저 피해를 흡수합니다. 균열 망치로 빠르게 파괴할 수 있습니다.");
-            if(state.Enraged)EnemyStatusIcon(i,buffPoint+new Vector2(-42,0),ItemArt(ItemCatalog.WarHorn),"광폭화",()=>"보스가 4턴에 진입하거나 체력이 절반 이하가 되면 활성화됩니다. 공격 약화는 35%, 궁극기 흡수는 25로 강화됩니다.");
+            int status=0;
+            if(state.Guarding)EnemyStatusIcon(i,status++,Assets.Buff,"경화",()=>"받는 피해 -30%.");
+            if(state.Rear && s.Enemies.Any(e=>e.Health>0 && !e.Rear && e.Guarding))EnemyStatusIcon(i,status++,Assets.Buff,"후열 엄호",()=>"선택 대상 공격 피해 -10%.");
+            if(state.Barrier>0)EnemyStatusIcon(i,status++,Assets.Buff,"보호막",()=>"남은 보호막 "+GameMath.Number(s.Enemies[index].Barrier));
+            if(state.Enraged)EnemyStatusIcon(i,status++,ItemArt(ItemCatalog.WarHorn),"광폭화",()=>"공격 약화 25% · 궁극기 흡수 15.");
         }
     }
-    void EnemyStatusIcon(int index,Vector2 position,Sprite sprite,string title,Func<string> description)
+    void EnemyStatusIcon(int index,int slot,Sprite sprite,string title,Func<string> description)
     {
         var parent=enemyIntentIcons[index];
         var icon=Picture(parent,title+index,0,0,32,32,sprite); icon.preserveAspect=true;
-        var rect=icon.rectTransform; rect.anchorMin=rect.anchorMax=rect.pivot=new Vector2(.5f,.5f); rect.anchoredPosition=position-parent.anchoredPosition;
+        var rect=icon.rectTransform; rect.anchorMin=rect.anchorMax=rect.pivot=new Vector2(.5f,.5f); rect.anchoredPosition=new Vector2((slot%2)*36-18,-42-(slot/2)*36);
         AttachTooltip(rect,()=>title,description);
     }
     public string InterferenceText()
     {
         if(Manager.Run==null) return "";
         var s=Manager.Run.State; var effects=new List<string>();
-        if(s.Weakened) effects.Add("피해 -"+(Manager.Run.WeakenAmount*100).ToString("0")+"%"); if(s.FocusDisrupted) effects.Add("집중 획득 -50%");
-        if(s.SupportSuppressed)effects.Add("지원 효과 -25%");
+        if(s.Weakened) effects.Add("피해 -"+(Manager.Run.WeakenAmount*100).ToString("0")+"%"); if(s.FocusDisrupted) effects.Add("집중 획득 -25%");
+        if(s.SupportSuppressed)effects.Add("지원 효과 -15%");
         if(s.SealedSlot>=0) effects.Add((s.SealedSlot+1)+"번 칸 봉인");
         var sealedCard=s.Find(s.SealedCardUid); if(sealedCard!=null)effects.Add(sealedCard.Data.Name+" 카드 봉인");
         if(s.LostTurns>0)effects.Add("기한 -"+s.LostTurns+"턴");
@@ -505,6 +515,7 @@ public class GameUI : MonoBehaviour
     {
         if(Manager.Run==null || Manager.Busy) return;
         Manager.Run.State.Cards=Manager.Run.State.Cards.OrderByDescending(c=>c.Data.Rarity).ThenBy(c=>c.Definition).ThenByDescending(c=>c.Stars).ToList();
+        Manager.Run.PackBag();
         page=0; Manager.Commit(); if(InventoryOpen) ShowInventory();
     }
     public void Select(int uid) { selected=uid; RefreshInfo(); foreach(var v in bagCards) if(v!=null) v.SetSelected(v.Card.Uid==uid); foreach(var v in sequenceCards) if(v!=null) v.SetSelected(v.Card.Uid==uid); }
@@ -545,7 +556,8 @@ public class GameUI : MonoBehaviour
             RectTransformUtility.ScreenPointToLocalPointInRectangle(bag,screen,null,out var point);
             float x=point.x-bag.rect.xMin-66;
             float cell=(bag.rect.width-132)/BagColumns;
-            if(x>=0 && x<cell*BagColumns) Manager.PlaceInBag(uid,page*BagColumns+Mathf.FloorToInt(x/cell));
+            int slot=page*BagColumns+Mathf.FloorToInt(x/cell+.5f);
+            if(x>=0 && x<cell*BagColumns)Manager.PlaceInBag(uid,Math.Min(slot,Manager.Run.BagCount));
         }
     }
     public void ToggleInventory() { if(Manager.Busy) return; if(InventoryOpen) CloseInventory(); else if(!ModalOpen) ShowInventory(); }
@@ -578,6 +590,7 @@ public class GameUI : MonoBehaviour
     void Update()
     {
         if(CanvasTransform==null) return;
+        if(buffTooltip!=null && (tooltipAnchor==null || !tooltipAnchor.gameObject.activeInHierarchy))HideBuffTooltip();
         Shader.SetGlobalFloat("_CardTime",Time.unscaledTime);
         if(speedText!=null) speedText.text="×"+Manager.Speed.ToString("0");
         if(toastPanel.gameObject.activeSelf && Time.unscaledTime>toastUntil) { toast.text=""; toastPanel.gameObject.SetActive(false); }
@@ -826,9 +839,14 @@ public class GameUI : MonoBehaviour
         MakeButton(w,"Back",1124,-810,360,60,"돌아가기",()=>{CloseOverlay();Refresh();},24);
         Label(w,"Capacity",54,-814,820,52,"가방 "+Manager.Run.BagCount+" / 16",24,Ink,TextAnchor.MiddleLeft);
     }
-    void ShowEnding()
+    void ShowClearPreview()
     {
-        var s=Manager.Run.State; bool win=s.Phase==RunPhase.Victory;
+        if(Manager.InMenu || Manager.Run==null || Manager.Busy)return;
+        ShowEnding(true);
+    }
+    void ShowEnding(bool previewClear=false)
+    {
+        var s=Manager.Run.State; bool win=previewClear || s.Phase==RunPhase.Victory;
         if(!win)
         {
             var gameOver=Overlay("Phase",800,410);
@@ -840,12 +858,14 @@ public class GameUI : MonoBehaviour
                 "\n누적 피해량   "+GameMath.Number(s.TotalDamage)+"\n실행한 카드   "+s.CardsPlayed+"장"),24);
             return;
         }
-        var w=Overlay("Phase",1050,750);
-        Label(w,"Title",50,-55,950,90,win?"공허를 베다":"아직, 닿지 못한 일섬",48,Ink);
-        Label(w,"Story",100,-170,850,110,win?"마지막 균열이 닫히고, 중앙 홀에 아침빛이 스민다.\n오늘의 수업은 여기까지다.":"공허가 닫히기 전에 빠져나왔다.\n순서를 바꾸면, 다음 일격은 달라질 것이다.",27,Ink);
-        Label(w,"Stats",130,-325,790,200,"돌파한 웨이브   "+s.WavesCleared+" / 30\n최대 단일 타격   "+GameMath.Number(s.BestHit)+"\n누적 피해량   "+GameMath.Number(s.TotalDamage)+"\n실행한 카드   "+s.CardsPlayed+"장",29,Ink);
-        MakeButton(w,"Retry",140,-585,350,65,"다시 공허로",Manager.NewRun,27);
-        MakeButton(w,"Hall",560,-585,350,65,"중앙 홀로",Manager.ReturnToTitle,27);
+        var w=Overlay("Phase",960,660);
+        Label(w,"Title",70,-62,820,100,"클리어",60,Ink);
+        Label(w,"ClearInfo",120,-218,720,184,
+            "돌파 웨이브   "+s.WavesCleared+" / 30\n최대 타격   "+GameMath.Number(s.BestHit)+
+            "\n누적 피해   "+GameMath.Number(s.TotalDamage)+"\n실행한 카드   "+s.CardsPlayed+"장",26,Ink);
+        MakeButton(w,"Retry",110,-490,350,76,"다시하기",Manager.NewRun,30);
+        MakeButton(w,"Main",500,-490,350,76,"메인으로",Manager.ReturnToTitle,30);
+        if(previewClear)MakeButton(w,"ClosePreview",788,-24,140,44,"닫기",()=>{CloseOverlay();Refresh();},20);
     }
     static void PlaceCard(CardUI card,Transform parent,float x,float y,float scale)
     {

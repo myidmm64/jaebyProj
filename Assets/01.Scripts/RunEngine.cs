@@ -9,22 +9,24 @@ public sealed class RunEngine
     public bool IsBoss => State.Node==4;
     public int CombatIndex => State.Node < 2 ? State.Node : 2;
     public const int BagCapacity=16;
-    public int TurnLimit => (IsBoss ? 8 : State.Floor==1?6:5) + Math.Min(2,State.Items[4])+State.BonusTurns-State.LostTurns;
+    public int TurnLimit => (IsBoss?10:8) + Math.Min(2,State.Items[4])+State.BonusTurns-State.LostTurns;
     public int BagCount => State.Cards.Count(c=>Array.IndexOf(State.Sequence,c.Uid)<0);
-    public double WeakenAmount => State.Weakened?Math.Max(.25,State.WeakenStrength):0;
+    public double WeakenAmount => State.Weakened?Math.Max(.15,State.WeakenStrength):0;
     public double SlotScale(CardDefinition card,int slot) => card.IsSlotBonusActive(slot)?1+(card.SlotBonus-1)*(1+Math.Min(1.5,State.Items[ItemCatalog.OrderSheet]*.5)):1;
     public bool Cleared => State.Enemies.All(e=>e.Health<=0);
-    public List<OwnedCard> BagCards => State.Cards.Where(c=>Array.IndexOf(State.Sequence,c.Uid)<0).ToList();
+    public List<OwnedCard> BagCards => State.BagSlots.Select(uid=>State.Find(uid)).Where(c=>c!=null && Array.IndexOf(State.Sequence,c.Uid)<0).ToList();
+    public OwnedCard BagCardAt(int slot) => slot>=0 && slot<State.BagSlots.Length?State.Find(State.BagSlots[slot]):null;
     public bool IsCardSealed(int uid) => uid>0 && State.SealedCardUid==uid;
     public bool HasExecutableCard => State.Sequence.Where((id,slot)=>slot!=State.SealedSlot && !IsCardSealed(id)).Any(id=>State.Find(id)!=null);
     public bool CanExecute => State.Phase==RunPhase.Battle;
     public RunEngine(RunState saved)
     {
-        MigrateSavedState(saved); State=saved;
+        MigrateSavedState(saved); State=saved; SyncBagOrder();
         if(State.OfferStars==null || State.OfferStars.Length!=3)State.OfferStars=new[]{1,1,1};
         for(int i=0;i<3;i++)State.OfferStars[i]=Math.Max(1,Math.Min(4,State.OfferStars[i]));
         if(State.Phase==RunPhase.Battle && State.Enemies.Any(e=>e.Intent==EnemyIntent.None)) { State.SealedSlot=-1; PlanIntents(); }
         RefreshCardSealTargets();
+        if(IsBoss && State.Floor==3 && Cleared && (State.Phase==RunPhase.CardReward || State.Phase==RunPhase.ItemReward))State.Phase=RunPhase.Victory;
     }
     public static RunEngine New(int seed)
     {
@@ -43,7 +45,7 @@ public sealed class RunEngine
     {
         if(s.Items==null)s.Items=new int[ItemCatalog.Count];
         else if(s.Items.Length!=ItemCatalog.Count)Array.Resize(ref s.Items,ItemCatalog.Count);
-        if(s.Version>=3)return;
+        if(s.Version>=4) { NormalizeBagSlots(s); s.Version=5; return; }
         if(s.Version<2)
         {
             var removed=s.Cards.Where(c=>c.Definition==30 || c.Definition==32).ToArray();
@@ -60,18 +62,59 @@ public sealed class RunEngine
         }
         for(int i=0;i<s.Enemies.Count;i++)
         {
-            var enemy=s.Enemies[i]; enemy.Boss=s.Node==4 && i==0; enemy.Rear=s.Node!=4 && i>=2;
-            double fraction=enemy.MaxHealth>0?enemy.Health/(double)enemy.MaxHealth:1;
+            var enemy=s.Enemies[i]; enemy.Boss=s.Node==4 && i==0; enemy.Rear=s.Node==4?i>0:i>=2;
+            double fraction=enemy.MaxHealth>0?Math.Min(1,enemy.Health/(double)enemy.MaxHealth):1;
+            double barrierFraction=enemy.MaxHealth>0?enemy.Barrier/(double)enemy.MaxHealth:0;
             enemy.MaxHealth=GameMath.Damage(EnemyHealth(s,enemy.Kind,enemy.Boss)*(enemy.Rear?.85:1)); enemy.Health=GameMath.Damage(enemy.MaxHealth*fraction);
+            enemy.Barrier=GameMath.Damage(enemy.MaxHealth*Math.Min(.08,barrierFraction));
+            enemy.Enraged=enemy.Boss && (s.Turn>=6 || fraction<=.5);
         }
-        s.Version=3;
+        s.WeakenStrength=s.Weakened?(s.Enemies.Any(e=>e.Boss && e.Enraged)?.25:.15):0;
+        s.LostTurns=Math.Min(1,s.LostTurns);
+        NormalizeBagSlots(s); s.Version=5;
+    }
+    static void NormalizeBagSlots(RunState state)
+    {
+        if(state.BagSlots==null || state.BagSlots.Length!=BagCapacity)
+        {
+            var old=state.BagSlots;
+            state.BagSlots=Enumerable.Repeat(-1,BagCapacity).ToArray();
+            if(old!=null)Array.Copy(old,state.BagSlots,Math.Min(old.Length,BagCapacity));
+        }
+        var seen=new HashSet<int>();
+        for(int i=0;i<state.BagSlots.Length;i++)
+        {
+            int uid=state.BagSlots[i];
+            if(state.Find(uid)==null || Array.IndexOf(state.Sequence,uid)>=0 || !seen.Add(uid))state.BagSlots[i]=-1;
+        }
+        int count=0;
+        for(int i=0;i<state.BagSlots.Length;i++)if(state.BagSlots[i]>0)state.BagSlots[count++]=state.BagSlots[i];
+        for(int i=count;i<state.BagSlots.Length;i++)state.BagSlots[i]=-1;
+        foreach(var card in state.Cards)
+        {
+            if(Array.IndexOf(state.Sequence,card.Uid)>=0 || seen.Contains(card.Uid))continue;
+            if(count>=BagCapacity)break;
+            state.BagSlots[count++]=card.Uid; seen.Add(card.Uid);
+        }
+    }
+    void SyncBagOrder()
+    {
+        State.Cards=State.Cards.OrderBy(card=>
+        {
+            int slot=Array.IndexOf(State.BagSlots,card.Uid); return slot>=0?slot:BagCapacity;
+        }).ToList();
+    }
+    public void PackBag()
+    {
+        State.BagSlots=Enumerable.Repeat(-1,BagCapacity).ToArray();
+        NormalizeBagSlots(State); SyncBagOrder();
     }
     static long EnemyHealth(RunState s,int kind,bool boss=false)
     {
-        if(boss)return GameMath.Damage(new[]{0d,330000d,28000000d,380000000d}[s.Floor]);
+        if(boss)return GameMath.Damage(new[]{0d,12000d,65000d,180000d}[s.Floor]);
         int combat=s.Node<2?s.Node:2;
         if(s.Node==4)combat=3;
-        return GameMath.Damage(EnemyCatalog.Get(kind).Health*new[]{1.2,98d,4125d}[s.Floor-1]*Math.Pow(1.6,combat)*Math.Pow(1.45,s.Wave));
+        return GameMath.Damage(EnemyCatalog.Get(kind).Health*new[]{.8,3d,8d}[s.Floor-1]*Math.Pow(1.25,combat)*Math.Pow(1.18,s.Wave));
     }
     static double StrongestMultiplier(System.Collections.Generic.Dictionary<int,double> values,int id,double amount)
     {
@@ -97,32 +140,44 @@ public sealed class RunEngine
     }
     public OwnedCard AddCard(int id, int stars=1)
     {
-        var card=new OwnedCard(State.NextUid++,id,stars); State.Cards.Add(card); RefreshCardSealTargets(); return card;
+        var card=new OwnedCard(State.NextUid++,id,stars); State.Cards.Add(card);
+        NormalizeBagSlots(State); SyncBagOrder(); RefreshCardSealTargets(); return card;
     }
     public bool Equip(int uid,int slot)
     {
         var card=State.Find(uid);
         if(State.Phase!=RunPhase.Battle || slot<0 || slot>=6 || slot==State.SealedSlot || card==null) return false;
         int old=Array.IndexOf(State.Sequence,uid);
+        int bagSlot=Array.IndexOf(State.BagSlots,uid), displaced=State.Sequence[slot];
         if(old>=0) State.Sequence[old]=State.Sequence[slot];
-        State.Sequence[slot]=uid; return true;
+        State.Sequence[slot]=uid;
+        if(old<0 && bagSlot>=0)State.BagSlots[bagSlot]=State.Find(displaced)!=null?displaced:-1;
+        NormalizeBagSlots(State); SyncBagOrder(); return true;
     }
     public bool Unequip(int slot)
     {
         if(slot<0 || slot>=6 || (State.Find(State.Sequence[slot])!=null && BagCount>=BagCapacity)) return false;
-        State.Sequence[slot]=-1; return true;
+        State.Sequence[slot]=-1; NormalizeBagSlots(State); SyncBagOrder(); return true;
     }
     public bool PlaceInBag(int uid,int slot)
     {
         if(State.Phase!=RunPhase.Battle || slot<0) return false;
         var card=State.Find(uid); if(card==null) return false;
         if(Array.IndexOf(State.Sequence,uid)>=0 && BagCount>=BagCapacity)return false;
+        NormalizeBagSlots(State);
+        var bag=BagCards;
+        int from=bag.FindIndex(c=>c.Uid==uid);
+        if(from>=0)
+        {
+            bag.RemoveAt(from);
+            if(from<slot)slot--;
+        }
+        if(bag.Count>=BagCapacity)return false;
+        bag.Insert(Math.Min(slot,bag.Count),card);
         for(int i=0;i<State.Sequence.Length;i++) if(State.Sequence[i]==uid) State.Sequence[i]=-1;
-        State.Cards.Remove(card);
-        var bag=State.Cards.Where(c=>Array.IndexOf(State.Sequence,c.Uid)<0).ToList();
-        slot=Math.Min(slot,bag.Count);
-        int index=slot<bag.Count?State.Cards.IndexOf(bag[slot]):bag.Count>0?State.Cards.IndexOf(bag[bag.Count-1])+1:State.Cards.Count;
-        State.Cards.Insert(index,card);
+        State.BagSlots=Enumerable.Repeat(-1,BagCapacity).ToArray();
+        for(int i=0;i<bag.Count;i++)State.BagSlots[i]=bag[i].Uid;
+        SyncBagOrder();
         return true;
     }
     public bool MoveCard(int uid,int targetUid)
@@ -131,6 +186,7 @@ public sealed class RunEngine
         int from=State.Cards.FindIndex(c=>c.Uid==uid), to=State.Cards.FindIndex(c=>c.Uid==targetUid);
         if(from<0 || to<0 || from==to) return false;
         var card=State.Cards[from]; State.Cards.RemoveAt(from); State.Cards.Insert(to,card);
+        PackBag();
         return true;
     }
     public bool CanMerge(int sourceUid,int targetUid)
@@ -144,6 +200,7 @@ public sealed class RunEngine
         State.Find(targetUid).Stars++;
         for(int i=0;i<6;i++) if(State.Sequence[i]==sourceUid) State.Sequence[i]=-1;
         State.Cards.Remove(State.Find(sourceUid));
+        NormalizeBagSlots(State); SyncBagOrder();
         RefreshCardSealTargets();
         return true;
     }
@@ -153,9 +210,11 @@ public sealed class RunEngine
         while(true)
         {
             var pair=State.Cards.Where(c=>!c.Temporary && c.Stars<4 && !IsCardSealed(c.Uid))
-                .GroupBy(c=>c.Definition+":"+c.Stars).FirstOrDefault(g=>g.Count()>=2);
+                .GroupBy(c=>c.Definition+":"+c.Stars).Where(g=>g.Count()>=2)
+                .OrderBy(g=>g.Any(c=>Array.IndexOf(State.Sequence,c.Uid)>=0)?0:1).FirstOrDefault();
             if(pair==null) break;
-            var keep=pair.First(); var remove=pair.Skip(1).First();
+            var keep=pair.OrderBy(c=>{int slot=Array.IndexOf(State.Sequence,c.Uid);return slot>=0?slot:6;}).First();
+            var remove=pair.Where(c=>c.Uid!=keep.Uid).OrderBy(c=>Array.IndexOf(State.Sequence,c.Uid)>=0?1:0).First();
             MergeInto(remove.Uid,keep.Uid); count++;
         }
         return count;
@@ -168,6 +227,7 @@ public sealed class RunEngine
         State.Gold+=SellPrice(c);
         for(int i=0;i<6;i++) if(State.Sequence[i]==uid) State.Sequence[i]=-1;
         State.Cards.Remove(c);
+        NormalizeBagSlots(State); SyncBagOrder();
         if(State.SealedCardUid==uid)State.SealedCardUid=0;
         RefreshCardSealTargets(); return true;
     }
@@ -189,7 +249,7 @@ public sealed class RunEngine
         // Use the actual cell index: empty/sealed cells still retain their number.
         double slotScale=SlotScale(d,slot);
         double value=d.Value(card.Stars)*(d.IsAttack?1:slotScale);
-        if(s.SupportSuppressed && d.Effect!=CardEffect.Focus && d.Effect!=CardEffect.Rhythm && !d.IsAttack && d.Effect!=CardEffect.Delay)value*=.75;
+        if(s.SupportSuppressed && d.Effect!=CardEffect.Focus && d.Effect!=CardEffect.Rhythm && !d.IsAttack && d.Effect!=CardEffect.Delay)value*=.85;
         switch(d.Effect)
         {
             case CardEffect.Focus: GainFocus(value); break;
@@ -242,19 +302,11 @@ public sealed class RunEngine
                     if(critical) { result.ChanceSuccess=true; result.ChanceText=string.IsNullOrEmpty(result.ChanceText)?"행운 ×"+turn.CriticalScale.ToString("0.##"):result.ChanceText+" · 행운 ×"+turn.CriticalScale.ToString("0.##"); }
                 }
                 long damage=GameMath.Damage((value+turn.Flat*d.ForgeScale(card.Stars)+s.Items[ItemCatalog.Whetstone]*40*s.Floor+s.Focus*d.Ratio(card.Stars))*mult*slotScale);
+                var targets=TargetsFor(d);
                 for(int hit=0;hit<d.Hits*(1+turn.Echo);hit++)
                 {
                     long hitDamage=hit<d.Hits?damage:GameMath.Damage(damage*turn.EchoPower);
-                    if(d.All)
-                    {
-                        for(int i=0;i<s.Enemies.Count;i++) Hit(i,hitDamage,result,d);
-                    }
-                    else
-                    {
-                        int target=s.Target;
-                        if(target<0 || target>=s.Enemies.Count || s.Enemies[target].Health<=0) target=s.Enemies.FindIndex(e=>e.Health>0);
-                        if(target>=0) Hit(target,hitDamage,result,d);
-                    }
+                    foreach(int target in targets)Hit(target,hitDamage,result,d);
                 }
                 if(d.Consume || d.Effect==CardEffect.Ultimate) s.Focus*=Math.Max(d.FocusRetention,Math.Min(.3,s.Items[ItemCatalog.EchoBottle]*.1));
                 if(d.FocusGain>0)GainFocus(d.FocusGain*value/d.Power);
@@ -270,14 +322,34 @@ public sealed class RunEngine
         return result;
     }
     double Chance(CardDefinition card,int stars) => Math.Min(.95,card.ChanceAt(stars)+Math.Min(.15,State.Items[ItemCatalog.LuckyDie]*.05));
-    void GainFocus(double n) { State.Focus=GameMath.Clamp(State.Focus+n*(1+State.Items[0]*.2)*(State.FocusDisrupted?.5:1)*(State.SupportSuppressed?.75:1)); }
+    void GainFocus(double n) { State.Focus=GameMath.Clamp(State.Focus+n*(1+State.Items[0]*.2)*(State.FocusDisrupted?.75:1)*(State.SupportSuppressed?.85:1)); }
+    public int[] TargetsFor(CardDefinition card)
+    {
+        if(card.Target==CardTarget.Rearmost)
+        {
+            int last=State.Enemies.FindLastIndex(e=>e.Health>0);
+            return last>=0?new[]{last}:Array.Empty<int>();
+        }
+        int first=State.Target;
+        if(first<0 || first>=State.Enemies.Count || State.Enemies[first].Health<=0)first=State.Enemies.FindIndex(e=>e.Health>0);
+        if(first<0)return Array.Empty<int>();
+        if(card.Target==CardTarget.Two)
+        {
+            for(int offset=1;offset<State.Enemies.Count;offset++)
+            {
+                int next=(first+offset)%State.Enemies.Count;
+                if(State.Enemies[next].Health>0)return new[]{first,next};
+            }
+        }
+        return new[]{first};
+    }
     void Hit(int index,long damage,CardResult result,CardDefinition card)
     {
         var enemy=State.Enemies[index]; if(enemy.Health<=0) return;
         if(card.Finisher && enemy.Health<=enemy.MaxHealth*.5) damage=GameMath.Damage(damage*2d);
         if(enemy.Boss)damage=GameMath.Damage(damage*(1+State.Items[ItemCatalog.BossLens]*.2));
-        if(enemy.Guarding && !card.PierceGuard)damage=GameMath.Damage(damage*(1-Math.Max(.1,.5-Math.Min(.4,State.Items[ItemCatalog.PiercingNeedle]*.15))));
-        if(enemy.Rear && !card.All && !card.PierceGuard && State.Enemies.Any(e=>e.Health>0 && !e.Rear && e.Guarding))damage=GameMath.Damage(damage*.8);
+        if(enemy.Guarding && !card.PierceGuard)damage=GameMath.Damage(damage*(1-Math.Max(.05,.3-Math.Min(.25,State.Items[ItemCatalog.PiercingNeedle]*.1))));
+        if(enemy.Rear && card.Target==CardTarget.Selected && !card.PierceGuard && State.Enemies.Any(e=>e.Health>0 && !e.Rear && e.Guarding))damage=GameMath.Damage(damage*.9);
         double shieldPower=1+State.Items[ItemCatalog.RiftHammer]*.75;
         long absorbed=Math.Min(enemy.Barrier,GameMath.Damage(damage*shieldPower)); enemy.Barrier-=absorbed;
         result.BarrierDamage=(long)Math.Min(GameMath.Max,result.BarrierDamage+(double)absorbed);
@@ -291,15 +363,22 @@ public sealed class RunEngine
     }
     public void EndTurn()
     {
+        if(State.Phase!=RunPhase.Battle)return;
         var s=State; s.TurnsPlayed++; s.Focus=0; s.SealedSlot=-1; s.SealedCardUid=0;
         foreach(var c in s.Cards.Where(c=>c.Temporary).ToArray())
         {
             for(int i=0;i<6;i++) if(s.Sequence[i]==c.Uid) s.Sequence[i]=-1;
             s.Cards.Remove(c);
         }
+        NormalizeBagSlots(s);
         if(Cleared)
         {
-            s.WavesCleared++; s.Gold+=(int)((15+s.Floor*8)*(1+s.Items[5]*.15));
+            s.WavesCleared++;
+            if(IsBoss && s.Floor==3)
+            {
+                s.Phase=RunPhase.Victory; return;
+            }
+            s.Gold+=(int)((15+s.Floor*8)*(1+s.Items[5]*.15));
             s.Phase=RunPhase.CardReward; s.Offers=CardOffers();
         }
         else if(s.Turn>=TurnLimit) s.Phase=RunPhase.Defeat;
@@ -311,23 +390,23 @@ public sealed class RunEngine
             {
                 switch(enemy.Intent)
                 {
-                    case EnemyIntent.Weaken: s.Weakened=true; s.WeakenStrength=Math.Max(s.WeakenStrength,enemy.Enraged?.35:.25); break;
+                    case EnemyIntent.Weaken: s.Weakened=true; s.WeakenStrength=Math.Max(s.WeakenStrength,enemy.Enraged?.25:.15); break;
                     case EnemyIntent.Guard: enemy.Guarding=true; break;
                     case EnemyIntent.Seal: s.SealedSlot=enemy.IntentSlot; break;
                     case EnemyIntent.CardSeal:
                         if(s.Find(enemy.IntentCardUid)!=null)s.SealedCardUid=enemy.IntentCardUid;
                         break;
                     case EnemyIntent.DisruptFocus: s.FocusDisrupted=true; break;
-                    case EnemyIntent.SiphonUltimate: s.Ultimate=Math.Max(0,s.Ultimate-(enemy.Enraged?25:15)); break;
-                    case EnemyIntent.Pressure: s.LostTurns=Math.Min(2,s.LostTurns+1); break;
-                    case EnemyIntent.Regenerate: enemy.Health=Math.Min(enemy.MaxHealth,enemy.Health+GameMath.Damage(enemy.MaxHealth*(enemy.Boss?.02:.05))); break;
+                    case EnemyIntent.SiphonUltimate: s.Ultimate=Math.Max(0,s.Ultimate-(enemy.Enraged?15:10)); break;
+                    case EnemyIntent.Pressure: s.LostTurns=Math.Min(1,s.LostTurns+1); break;
+                    case EnemyIntent.Regenerate: enemy.Health=Math.Min(enemy.MaxHealth,enemy.Health+GameMath.Damage(enemy.MaxHealth*(enemy.Boss?.01:.03))); break;
                     case EnemyIntent.Fortify:
                         foreach(var ally in s.Enemies.Where(e=>e.Health>0))
-                            ally.Barrier=Math.Min(GameMath.Damage(ally.MaxHealth*.15),ally.Barrier+GameMath.Damage(ally.MaxHealth*(ally.Boss?.025:.06)));
+                            ally.Barrier=Math.Min(GameMath.Damage(ally.MaxHealth*.08),ally.Barrier+GameMath.Damage(ally.MaxHealth*(ally.Boss?.015:.03)));
                         break;
                     case EnemyIntent.MendAllies:
                         foreach(var ally in s.Enemies.Where(e=>e.Health>0))
-                            ally.Health=Math.Min(ally.MaxHealth,ally.Health+GameMath.Damage(ally.MaxHealth*(ally.Boss?.015:.04)));
+                            ally.Health=Math.Min(ally.MaxHealth,ally.Health+GameMath.Damage(ally.MaxHealth*(ally.Boss?.0075:.02)));
                         break;
                     case EnemyIntent.Suppress: s.SupportSuppressed=true; break;
                 }
@@ -481,6 +560,7 @@ public sealed class RunEngine
     public void BeginWave()
     {
         var s=State; s.Phase=RunPhase.Battle; s.Turn=1; s.Focus=State.Items[2]*40*s.Floor; s.Target=0;
+        NormalizeBagSlots(s);
         s.Weakened=false; s.WeakenStrength=0; s.FocusDisrupted=false; s.SupportSuppressed=false; s.SealedSlot=-1; s.SealedCardUid=0; s.BonusTurns=0; s.LostTurns=0;
         s.Ultimate=Math.Min(100,s.Ultimate+s.Items[5]*12);
         s.Enemies.Clear();
@@ -491,14 +571,14 @@ public sealed class RunEngine
             int[] helpers=s.Floor==1?new[]{3}:s.Floor==2?new[]{5,8}:new[]{6,9};
             foreach(int helper in helpers)
             {
-                long helperHp=EnemyHealth(s,helper);
+                long helperHp=GameMath.Damage(EnemyHealth(s,helper)*.85);
                 s.Enemies.Add(new EnemyState{Name=EnemyCatalog.Get(helper).Name,Kind=helper,Health=helperHp,MaxHealth=helperHp,Rear=true});
             }
         }
         else
         {
             bool first=s.Floor==1 && s.Node==0 && s.Wave==0;
-            int count=first?2:s.Floor==1?3:s.Floor==3 || s.Wave==2 || s.Node==3?4:3;
+            int count=first?2:s.Floor==1?(s.Wave==2?3:2):s.Floor==2?3:(s.Wave==2 || s.Node==3?4:3);
             var formations=EnemyCatalog.Formations[s.Floor-1];
             var formation=formations[(int)(((uint)s.Seed+(uint)(s.Node*3+s.Wave))%(uint)formations.Length)];
             for(int i=0;i<count;i++)
@@ -516,10 +596,10 @@ public sealed class RunEngine
         for(int i=0;i<State.Enemies.Count;i++)
         {
             var enemy=State.Enemies[i];
-            if(enemy.Boss && (State.Turn>=4 || enemy.Health<=enemy.MaxHealth*.5))enemy.Enraged=true;
+            if(enemy.Boss && (State.Turn>=6 || enemy.Health<=enemy.MaxHealth*.5))enemy.Enraged=true;
             var pattern=enemy.Boss?EnemyCatalog.BossPatterns[State.Floor-1]:EnemyCatalog.Get(enemy.Kind).Pattern;
             enemy.Intent=pattern[(State.Turn-1+i)%pattern.Length];
-            if(enemy.Intent==EnemyIntent.Pressure && State.LostTurns>=2)enemy.Intent=EnemyIntent.Weaken;
+            if(enemy.Intent==EnemyIntent.Pressure && State.LostTurns>=1)enemy.Intent=EnemyIntent.Weaken;
             enemy.IntentSlot=(State.Turn+i)%6;
             if(enemy.Intent==EnemyIntent.CardSeal)SelectCardSealTarget(enemy,i);
         }
@@ -561,18 +641,18 @@ public sealed class RunEngine
     {
         switch(enemy.Intent)
         {
-            case EnemyIntent.Weaken: return "생존하면 다음 턴 아군 공격 피해 -"+(enemy.Enraged?35:25)+"%. 중첩되지 않습니다.";
-            case EnemyIntent.Guard: return "생존하면 다음 턴 자신이 받는 피해 -50%. 앞줄의 경화는 후열이 받는 단일 피해도 20% 줄입니다. 광역·관통 공격은 후열 엄호를 무시합니다.";
-            case EnemyIntent.Fortify: return "생존하면 살아 있는 모든 적에게 최대 체력의 6% 보호막을 추가합니다. 보스 본체는 2.5%, 누적 보호막은 최대 체력의 15%까지입니다.";
-            case EnemyIntent.MendAllies: return "생존하면 모든 살아 있는 적의 최대 체력 4%를 회복합니다. 보스 본체는 1.5% 회복하며 부활은 하지 않습니다.";
-            case EnemyIntent.Suppress: return "생존하면 다음 턴 아군 집중 획득·재련·배율 증가량 -25%. 반복·턴 연장에는 영향을 주지 않으며 중첩되지 않습니다.";
-            case EnemyIntent.Seal: return "생존하면 다음 턴 "+(enemy.IntentSlot+1)+"번 시퀀스 칸을 사용할 수 없습니다. 카드는 소멸하지 않습니다.";
-            case EnemyIntent.CardSeal: return "생존하면 다음 턴 '"+(enemy.IntentCardName??"카드 1장")+"'를 봉인합니다. 칸을 옮겨도 실행·합성할 수 없으며, 해당 턴 종료 시 해제됩니다.";
-            case EnemyIntent.DisruptFocus: return "생존하면 다음 턴 집중 획득량이 50% 감소합니다. 중첩되지 않습니다.";
-            case EnemyIntent.SiphonUltimate: return "생존하면 궁극기 게이지를 "+(enemy.Enraged?25:15)+" 감소시킵니다.";
-            case EnemyIntent.Pressure: return "생존하면 제한 턴을 1 줄입니다. 웨이브당 최대 2턴 감소합니다.";
-            case EnemyIntent.Regenerate: return "생존하면 자신의 최대 체력 5%를 회복합니다. 보스 본체는 2% 회복합니다.";
-            default: return "이번 턴 행동하지 않습니다.";
+            case EnemyIntent.Weaken: return "다음 턴 피해 -"+(enemy.Enraged?25:15)+"%.";
+            case EnemyIntent.Guard: return "다음 턴 받는 피해 -30%.\n전열 경화는 후열을 10% 엄호합니다.";
+            case EnemyIntent.Fortify: return "적 진영 보호막 +3% (보스 1.5%).\n보호막 최대 8%.";
+            case EnemyIntent.MendAllies: return "적 진영 체력 2% 회복 (보스 0.75%).";
+            case EnemyIntent.Suppress: return "다음 턴 집중·재련·배율 증가량 -15%.";
+            case EnemyIntent.Seal: return "다음 턴 "+(enemy.IntentSlot+1)+"번 칸 봉인.";
+            case EnemyIntent.CardSeal: return "다음 턴 '"+(enemy.IntentCardName??"카드 1장")+"' 봉인.";
+            case EnemyIntent.DisruptFocus: return "다음 턴 집중 획득 -25%.";
+            case EnemyIntent.SiphonUltimate: return "궁극기 -"+(enemy.Enraged?15:10)+".";
+            case EnemyIntent.Pressure: return "남은 턴 -1 (웨이브당 1회).";
+            case EnemyIntent.Regenerate: return "체력 3% 회복 (보스 1%).";
+            default: return "대기.";
         }
     }
 }

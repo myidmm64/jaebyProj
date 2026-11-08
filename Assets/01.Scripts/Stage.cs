@@ -65,8 +65,9 @@ public class Stage : MonoBehaviour
             var state=engine.State.Enemies[i];
             var definition=EnemyCatalog.Get(state.Kind);
             var e=Instantiate(definition.Body==0?assets.SlimePrefab:assets.StonePrefab,transform);
-            float height=GroundY+(state.Rear?.6f:0)+(definition.Floating?.14f:0);
-            float x=state.Boss?2.55f:engine.IsBoss?(i==1?4.8f:.8f):engine.State.Enemies.Count<=2?1.15f+i*2.3f:new[]{1.05f,3.65f,2.25f,5.1f}[i%4];
+            float height=GroundY+(definition.Floating?.14f:0);
+            float x=1.15f+i*(engine.State.Enemies.Count<=2?2.3f:1.55f);
+            if(engine.IsBoss)x=i==0?1.6f:3.9f+(i-1)*1.65f;
             Vector3 pos=new Vector3(x,height,0);
             e.transform.position=pos;
             var visual=e.GetComponentInChildren<SpriteRenderer>();
@@ -75,7 +76,7 @@ public class Stage : MonoBehaviour
                 if(assets.EnemyArt!=null && state.Kind<assets.EnemyArt.Length && assets.EnemyArt[state.Kind]!=null)visual.sprite=assets.EnemyArt[state.Kind];
                 if(state.Boss && assets.BossArt!=null && engine.State.Floor<=assets.BossArt.Length && assets.BossArt[engine.State.Floor-1]!=null)visual.sprite=assets.BossArt[engine.State.Floor-1];
                 visual.transform.localScale=Vector3.one; visual.transform.localPosition=Vector3.zero;
-                visual.sortingOrder=state.Rear?0:2;
+                visual.sortingOrder=2;
             }
             if(visual!=null && assets.CombatMaterial!=null) visual.sharedMaterial=assets.CombatMaterial;
             if(visual!=null) visual.color=assets.EnemyArt!=null && state.Kind<assets.EnemyArt.Length && assets.EnemyArt[state.Kind]!=null?Color.white:new Color(definition.Tint[0],definition.Tint[1],definition.Tint[2]);
@@ -88,7 +89,6 @@ public class Stage : MonoBehaviour
             enemies.Add(e); home.Add(pos); visuals.Add(visual); visualScale.Add(visual!=null?visual.transform.localScale:Vector3.one);
             visualHome.Add(visual!=null?visual.transform.localPosition:Vector3.zero);
             var groundShadow=CreateShadow(pos.x,state.Boss?1.8f:definition.Body==0?1.35f:1.1f);
-            groundShadow.transform.position+=Vector3.up*(state.Rear?.6f:0);
             groundShadow.gameObject.SetActive(state.Health>0); shadows.Add(groundShadow);
         }
         var bg=GameObject.Find("BattleBackground");

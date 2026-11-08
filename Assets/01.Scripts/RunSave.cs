@@ -26,7 +26,7 @@ public static class RunSave
             {
                 if(!File.Exists(path)) continue;
                 var s=JsonUtility.FromJson<RunState>(File.ReadAllText(path));
-                if(s==null || s.Version<1 || s.Version>3 || s.Floor<1 || s.Floor>3 || s.Node<0 || s.Node>4 || s.Sequence?.Length!=6 || s.Items==null || (s.Items.Length!=6 && s.Items.Length!=ItemCatalog.Count) || s.Cards==null || s.Enemies==null || s.Offers?.Length!=3 || s.Bought?.Length!=3) continue;
+                if(s==null || s.Version<1 || s.Version>5 || s.Floor<1 || s.Floor>3 || s.Node<0 || s.Node>4 || s.Sequence?.Length!=6 || s.Items==null || (s.Items.Length!=6 && s.Items.Length!=ItemCatalog.Count) || s.Cards==null || s.Enemies==null || s.Offers?.Length!=3 || s.Bought?.Length!=3) continue;
                 RunEngine.MigrateSavedState(s);
                 if(s.Cards.Count>RunEngine.BagCapacity+7 || s.Cards.Exists(c=>c.Definition<0 || c.Definition>=CardCatalog.All.Length || c.Stars<1 || c.Stars>4)) continue;
                 var ids=new System.Collections.Generic.HashSet<int>();
